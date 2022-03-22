@@ -22,6 +22,7 @@ class BibAreasTypes(db.Model):
     ref_name = db.Column(db.Unicode)
     ref_version = db.Column(db.Integer)
     num_version = db.Column(db.Unicode)
+    size_hierarchy = db.Column(db.Integer)
 
 
 @geoserializable
@@ -33,6 +34,8 @@ class LAreas(db.Model):
     area_name = db.Column(db.Unicode)
     area_code = db.Column(db.Unicode)
     geom = db.Column(Geometry("GEOMETRY"))
+    centroid = db.Column(Geometry("GEOMETRY"))
+    geojson_4326 = db.Column(db.Unicode)
     source = db.Column(db.Unicode)
     enable = db.Column(db.Boolean, nullable=False, default=True)
     meta_create_date = db.Column(db.DateTime, default=datetime.now)
