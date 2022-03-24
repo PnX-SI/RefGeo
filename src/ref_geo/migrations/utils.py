@@ -10,7 +10,6 @@ import os, os.path
 
 from utils_flask_sqla.migrations.utils import logger
 
-
 schema = 'ref_geo'
 
 
