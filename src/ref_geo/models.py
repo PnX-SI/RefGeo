@@ -45,6 +45,61 @@ class LAreas(db.Model):
 
 
 @serializable
+class BibLinearsTypes(db.Model):
+    __tablename__ = "bib_linears_types"
+    __table_args__ = {"schema": "ref_geo"}
+    id_type = db.Column(db.Integer, primary_key=True)
+    type_name = db.Column(db.Unicode)
+    type_code = db.Column(db.Unicode)
+    type_desc = db.Column(db.Unicode)
+    ref_name = db.Column(db.Unicode)
+    ref_version = db.Column(db.Integer)
+    num_version = db.Column(db.Unicode)
+
+
+@serializable
+class TLinearGroups(db.Model):
+    __table_name__ = "l_linear_groups"
+    __table_args__ = {"schema": "ref_geo"}
+    id_group = db.Column(db.Integer, primary_key=True)
+    id_type = db.Column(db.Integer, ForeignKey("ref_geo.bib_linears_types.id_type"))
+    group_name = db.Column(db.Unicode)
+    group_code = db.Column(db.Unicode)
+    linear_type = db.relationship("BibLinearsTypes", lazy="select")
+
+
+class CorLinearGroup(db.Model):
+    __table_name__ = "cor_linear_group"
+    __table_args__ = {"schema": "ref_geo"}
+    id_group = db.Column(
+        db.Integer,
+        ForeignKey("ref_geo.t_linear_groups.id_group"),
+        primary_key=True,
+    )
+    id_linear = db.Column(
+        db.Integer,
+        ForeignKey("ref_geo.l_linears.id_linear"),
+        primary_key=True,
+    )
+
+
+@geoserializable
+class LLinears(db.Model):
+    __tablename__ = "l_linears"
+    __table_args__ = {"schema": "ref_geo"}
+    id_linear = db.Column(db.Integer, primary_key=True)
+    id_type = db.Column(db.Integer, ForeignKey("ref_geo.bib_linears_types.id_type"))
+    linear_name = db.Column(db.Unicode)
+    linear_code = db.Column(db.Unicode)
+    geom = db.Column(Geometry("GEOMETRY"))
+    source = db.Column(db.Unicode)
+    enable = db.Column(db.Boolean, nullable=False, default=True)
+    meta_create_date = db.Column(db.DateTime, default=datetime.now)
+    meta_update_date = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    linear_type = db.relationship("BibLinearsTypes", lazy="select")
+    groups = db.relationship("TLinearGroups", secondary=CorLinearGroup.__table__)
+
+@serializable
 class LiMunicipalities(db.Model):
     __tablename__ = "li_municipalities"
     __table_args__ = {"schema": "ref_geo"}
