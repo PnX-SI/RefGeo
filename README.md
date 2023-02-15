@@ -9,6 +9,7 @@ Création et remplissage du référentiel géographique :
     pip install -e .
     pip install psycopg2  # for postgresql database
     export SQLALCHEMY_DATABASE_URI="postgresql://user:password@localhost:5432/database"
+    cd src/ref_geo/migrations
     alembic -x local-srid=2154 upgrade ref_geo@head
     alembic upgrade ref_geo_fr_municipalities@head  # Insertion des communes françaises
     alembic upgrade ref_geo_fr_departments@head  # Insertion des départements français

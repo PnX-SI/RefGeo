@@ -24,6 +24,13 @@ setuptools.setup(
     package_dir={"": "src"},
     package_data={"ref_geo.migrations": ["data/*.sql"]},
     install_requires=requirements,
+    extras_require={
+        "tests": [
+            "pytest",
+            "pytest-flask",
+            "jsonschema",
+        ],
+    },
     entry_points={
         "alembic": [
             "migrations = ref_geo.migrations:versions",
