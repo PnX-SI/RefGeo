@@ -28,6 +28,7 @@ setuptools.setup(
         "tests": [
             "pytest",
             "pytest-flask",
+            "pytest-cov",
             "jsonschema",
         ],
     },
