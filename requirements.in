@@ -5,3 +5,4 @@ python-dotenv
 sqlalchemy<2
 utils-flask-sqlalchemy>=0.3.0
 utils-flask-sqlalchemy-geo>=0.2.4
+psycopg2
