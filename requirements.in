@@ -1,5 +1,7 @@
 alembic
 sqlalchemy<1.4
+flask>=2.1
 flask-sqlalchemy
+python-dotenv
 utils-flask-sqlalchemy>=0.3.0
 utils-flask-sqlalchemy-geo>=0.2.4
