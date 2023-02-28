@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+1.2.3 (unreleased)
+------------------
+
+**🐛 Corrections**
+
+* Nom des communes (branche alembic `ref_geo_fr_municipalities`): correction des caractères `¼` et `½` en `Œ` et  `œ`
+
 1.2.1 (2022-11-21)
 ------------------
 
