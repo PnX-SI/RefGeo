@@ -1,6 +1,17 @@
 CHANGELOG
 =========
 
+1.3.0 (2023-03-03)
+------------------
+
+**🚀 Nouveautés**
+
+* Ajout des routes historiquement créées pour GeoNature
+* Possibilité de lancer le RefGeo comme application Flask autonome
+* Support de SQLAlchemy 1.4
+* Intégration continue avec ``pytest``
+
+
 1.2.1 (2022-11-21)
 ------------------
 
