@@ -1,0 +1,3 @@
+-r requirements.in
+-e file:dependencies/Utils-Flask-SQLAlchemy#egg=utils-flask-sqlalchemy
+-e file:dependencies/Utils-Flask-SQLAlchemy-Geo#egg=utils-flask-sqlalchemy-geo
