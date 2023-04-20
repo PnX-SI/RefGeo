@@ -1,0 +1,126 @@
+"""Rewrite function ref_geo.fct_get_altitude_intersection
+
+Revision ID: 1fdac7036dd9
+Revises: f7374cd6e38d
+Create Date: 2023-04-20 11:45:44.896318
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = '1fdac7036dd9'
+down_revision = 'f7374cd6e38d'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION ref_geo.fct_get_altitude_intersection(
+            mygeom geometry
+        )
+            RETURNS TABLE(altitude_min integer, altitude_max integer) 
+            LANGUAGE 'plpgsql'
+            COST 100
+            VOLATILE PARALLEL UNSAFE
+            ROWS 1000
+
+        AS $BODY$
+            DECLARE
+                thesrid int;
+                is_vectorized int;
+            BEGIN
+              SELECT Find_SRID('ref_geo', 'l_areas', 'geom') 
+              INTO thesrid;
+
+              SELECT COALESCE(gid, NULL) 
+              FROM ref_geo.dem_vector 
+              LIMIT 1 
+              INTO is_vectorized;
+
+              IF is_vectorized IS NULL THEN
+                -- Use dem
+                RETURN QUERY
+                SELECT min((altitude).val)::integer AS altitude_min, max((altitude).val)::integer AS altitude_max
+                FROM (
+                    SELECT public.ST_Intersection(
+                        rast, 
+                        public.ST_Transform(myGeom, thesrid)
+                    ) as altitude
+                    FROM ref_geo.dem AS altitude
+                    WHERE public.ST_Intersects(rast,public.ST_Transform(myGeom,thesrid))
+                ) AS a;
+              -- Use dem_vector
+              ELSE
+                RETURN QUERY
+                WITH d  as (
+                    SELECT public.ST_Transform(myGeom,thesrid) a
+                 )
+                SELECT min(val)::int as altitude_min, max(val)::int as altitude_max
+                FROM ref_geo.dem_vector, d
+                WHERE public.ST_Intersects(a,geom);
+              END IF;
+            END;
+            
+        $BODY$;
+        """
+    )
+
+
+def downgrade():
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION ref_geo.fct_get_altitude_intersection(
+            mygeom geometry
+        )
+            RETURNS TABLE(altitude_min integer, altitude_max integer) 
+            LANGUAGE 'plpgsql'
+            COST 100
+            VOLATILE PARALLEL UNSAFE
+            ROWS 1000
+
+        AS $BODY$
+            DECLARE
+                thesrid int;
+                is_vectorized int;
+            BEGIN
+                SELECT Find_SRID('ref_geo', 'l_areas', 'geom') 
+                INTO thesrid;
+
+                SELECT COALESCE(gid, NULL) 
+                FROM ref_geo.dem_vector 
+                LIMIT 1 
+                INTO is_vectorized;
+
+                IF is_vectorized IS NULL THEN
+                -- Use dem
+                    RETURN QUERY
+                        SELECT min((altitude).val)::integer AS altitude_min, max((altitude).val)::integer AS altitude_max
+                        FROM (
+                            SELECT public.ST_DumpAsPolygons(public.ST_Clip(
+                                rast,
+                                1,
+                                public.ST_Transform(myGeom,thesrid),
+                                true)
+                            ) AS altitude
+                            FROM ref_geo.dem AS altitude
+                            WHERE public.ST_Intersects(rast, public.ST_Transform(myGeom, thesrid))
+                        ) AS a;
+                -- Use dem_vector
+                ELSE
+                    RETURN QUERY
+                        WITH d  as (
+                            SELECT public.ST_Transform(myGeom,thesrid) a
+                         )
+                        SELECT min(val)::int as altitude_min, max(val)::int as altitude_max
+                        FROM ref_geo.dem_vector, d
+                        WHERE public.ST_Intersects(a,geom);
+                END IF;
+            END;
+            
+        $BODY$;
+        """
+    )
