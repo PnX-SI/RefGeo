@@ -14,7 +14,8 @@ def ref_geo():
 @ref_geo.command()
 @with_appcontext
 def info():
-    click.echo("RefGeo : nombre de zones par type")
+    click.echo("[RefGeo]")
+    click.echo("Nombre de zones par type :")
     q = (
         db.session.query(BibAreasTypes, func.count(LAreas.id_area).label("count"))
         .join(LAreas)
@@ -23,3 +24,8 @@ def info():
     )
     for area_type, count in q.all():
         click.echo("\t{}: {}".format(area_type.type_name, count))
+    click.echo("Modèle numérique de terrain :")
+    dem_count = db.session.execute("SELECT count(*) FROM ref_geo.dem").scalar()
+    click.echo(f"\tRaster : {dem_count} entrées")
+    dem_count = db.session.execute("SELECT count(*) FROM ref_geo.dem_vector").scalar()
+    click.echo(f"\tVectoriel : {dem_count} entrées")
