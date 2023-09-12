@@ -29,3 +29,26 @@ def info():
     click.echo(f"\tRaster : {dem_count} entrées")
     dem_count = db.session.execute("SELECT count(*) FROM ref_geo.dem_vector").scalar()
     click.echo(f"\tVectoriel : {dem_count} entrées")
+
+
+@ref_geo.group(help="Gestion du MNT")
+def mnt():
+    pass
+
+
+@mnt.command()
+@with_appcontext
+def vectorize(help="Convertir le MNT raster en vectoriel"):
+    click.echo("[1/2] Peuplement de ref_geo.dem_vector à partir de ref_geo.dem …")
+    db.session.execute(
+        "INSERT INTO ref_geo.dem_vector (geom, val) SELECT (ST_DumpAsPolygons(rast)).* FROM ref_geo.dem"
+    )
+    click.echo("[2/2] Actualisation de l’index ref_geo.index_dem_vector_geom …")
+    db.session.execute("REINDEX INDEX ref_geo.index_dem_vector_geom")
+
+
+@mnt.command()
+@with_appcontext
+def delete_vector(help="Supprimer le MNT vectoriel"):
+    click.echo("Suppression du MNT vectoriel …")
+    db.session.execute("TRUNCATE ref_geo.dem_vector")
