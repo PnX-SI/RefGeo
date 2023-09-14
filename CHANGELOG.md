@@ -4,18 +4,21 @@
 
 **🚀 Nouveautés**
 
-- Ajout d'un référentiel _point_ (table de type et table de geometries + modeles)
-- Ajout de table de correlation entre les lineaire et les aires (+ relations associées dans les modèles)
-  - exemple de requete pour remplir la table `ref_geo.cor_area_linear` pour les régions, départements et communes.
+- Ajout d'un référentiel de couches de _points_ (table des types de points et table de géometries + modèles) (#12)
+- Ajout de tables de correspondance entre les linéaires et les zonages (+ relations associées dans les modèles) (#12)
 
-```
-INSERT INTO ref_geo.cor_linear_area (id_linear, id_area)
-SELECT  id_linear, id_area
+**⚠️ Notes de version**
+
+- Les nouvelles tables de correspondances `ref_geo.cor_areas` et `ref_geo.cor_linear_area` ne sont pas remplies par défaut pour ne pas alourdir la base de données et ses calculs, alors qu'elles ne sont pas utilisées actuellement par GeoNature
+- Exemple de requête pour remplir la table `ref_geo.cor_area_linear` pour les régions, départements et communes :
+  ```
+  INSERT INTO ref_geo.cor_linear_area (id_linear, id_area)
+  SELECT  id_linear, id_area
     FROM ref_geo.l_areas la
     JOIN ref_geo.l_linears ll ON la.geom && ll.geom
     JOIN ref_geo.bib_areas_types bat ON bat.id_type =la.id_type
     WHERE bat.type_code IN ('DEP', 'REG', 'COM')
-```
+  ```
 
 ## 1.3.0 (2023-03-03)
 
