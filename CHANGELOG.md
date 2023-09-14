@@ -1,6 +1,23 @@
 # CHANGELOG
 
-## 1.4.0 (2023-09-14)
+## 1.4.0 (unreleased)
+
+**🚀 Nouveautés**
+
+- Ajout d'un référentiel _point_ (table de type et table de geometries + modeles)
+- Ajout de table de correlation entre les lineaire et les aires (+ relations associées dans les modèles)
+  - exemple de requete pour remplir la table `ref_geo.cor_area_linear` pour les régions, départements et communes.
+
+```
+INSERT INTO ref_geo.cor_linear_area (id_linear, id_area)
+SELECT  id_linear, id_area
+    FROM ref_geo.l_areas la
+    JOIN ref_geo.l_linears ll ON la.geom && ll.geom
+    JOIN ref_geo.bib_areas_types bat ON bat.id_type =la.id_type
+    WHERE bat.type_code IN ('DEP', 'REG', 'COM')
+```
+
+## 1.3.0 (2023-03-03)
 
 **🚀 Nouveautés**
 
