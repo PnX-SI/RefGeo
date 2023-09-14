@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 1.4.0 (unreleased)
+## 1.4.0 (2023-09-14)
 
 **🚀 Nouveautés**
 
