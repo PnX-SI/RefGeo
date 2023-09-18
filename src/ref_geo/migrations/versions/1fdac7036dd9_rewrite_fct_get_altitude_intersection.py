@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '1fdac7036dd9'
-down_revision = 'f7374cd6e38d'
+revision = "1fdac7036dd9"
+down_revision = "f7374cd6e38d"
 branch_labels = None
 depends_on = None
 
@@ -22,49 +22,57 @@ def upgrade():
         CREATE OR REPLACE FUNCTION ref_geo.fct_get_altitude_intersection(
             mygeom geometry
         )
-            RETURNS TABLE(altitude_min integer, altitude_max integer) 
+            RETURNS TABLE(altitude_min integer, altitude_max integer)
             LANGUAGE 'plpgsql'
             COST 100
-            VOLATILE PARALLEL UNSAFE
+            IMMUTABLE PARALLEL UNSAFE
             ROWS 1000
-
         AS $BODY$
             DECLARE
                 thesrid int;
                 is_vectorized int;
             BEGIN
-              SELECT Find_SRID('ref_geo', 'l_areas', 'geom') 
+              SELECT Find_SRID('ref_geo', 'l_areas', 'geom')
               INTO thesrid;
 
-              SELECT COALESCE(gid, NULL) 
-              FROM ref_geo.dem_vector 
-              LIMIT 1 
+              SELECT COALESCE(gid, NULL)
+              FROM ref_geo.dem_vector
+              LIMIT 1
               INTO is_vectorized;
 
-              IF is_vectorized IS NULL THEN
-                -- Use dem
+            IF is_vectorized IS NULL AND st_geometrytype(myGeom) = 'ST_Point' THEN
+               -- Use dem and st_value function
+                RETURN QUERY WITH alt AS (
+                    SELECT st_value(rast, public.st_transform(myGeom, thesrid))::int altitude
+                    FROM ref_geo.dem AS altitude
+                    WHERE public.st_intersects(rast, public.st_transform(myGeom, thesrid))
+                )
+                SELECT min(altitude) AS altitude_min, max(altitude) AS altitude_max
+                FROM alt;
+            ELSIF is_vectorized IS NULL THEN
+                -- Use dem ans st_intersection function
                 RETURN QUERY
                 SELECT min((altitude).val)::integer AS altitude_min, max((altitude).val)::integer AS altitude_max
                 FROM (
                     SELECT public.ST_Intersection(
-                        rast, 
+                        rast,
                         public.ST_Transform(myGeom, thesrid)
-                    ) as altitude
+                    ) AS altitude
                     FROM ref_geo.dem AS altitude
-                    WHERE public.ST_Intersects(rast,public.ST_Transform(myGeom,thesrid))
+                    WHERE public.ST_Intersects(rast,public.ST_Transform(myGeom, thesrid))
                 ) AS a;
               -- Use dem_vector
-              ELSE
+            ELSE
                 RETURN QUERY
-                WITH d  as (
+                WITH d AS (
                     SELECT public.ST_Transform(myGeom,thesrid) a
                  )
-                SELECT min(val)::int as altitude_min, max(val)::int as altitude_max
+                SELECT min(val)::int AS altitude_min, max(val)::int AS altitude_max
                 FROM ref_geo.dem_vector, d
                 WHERE public.ST_Intersects(a,geom);
               END IF;
             END;
-            
+
         $BODY$;
         """
     )
@@ -76,7 +84,7 @@ def downgrade():
         CREATE OR REPLACE FUNCTION ref_geo.fct_get_altitude_intersection(
             mygeom geometry
         )
-            RETURNS TABLE(altitude_min integer, altitude_max integer) 
+            RETURNS TABLE(altitude_min integer, altitude_max integer)
             LANGUAGE 'plpgsql'
             COST 100
             VOLATILE PARALLEL UNSAFE
@@ -87,12 +95,12 @@ def downgrade():
                 thesrid int;
                 is_vectorized int;
             BEGIN
-                SELECT Find_SRID('ref_geo', 'l_areas', 'geom') 
+                SELECT Find_SRID('ref_geo', 'l_areas', 'geom')
                 INTO thesrid;
 
-                SELECT COALESCE(gid, NULL) 
-                FROM ref_geo.dem_vector 
-                LIMIT 1 
+                SELECT COALESCE(gid, NULL)
+                FROM ref_geo.dem_vector
+                LIMIT 1
                 INTO is_vectorized;
 
                 IF is_vectorized IS NULL THEN
@@ -120,7 +128,7 @@ def downgrade():
                         WHERE public.ST_Intersects(a,geom);
                 END IF;
             END;
-            
+
         $BODY$;
         """
     )
