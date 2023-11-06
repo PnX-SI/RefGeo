@@ -1,7 +1,7 @@
 """add areas types size hierarchy
 
 Revision ID: f22d70b8fcfa
-Revises: f7374cd6e38d
+Revises: 795f6ea8ec45
 Create Date: 2023-05-24 17:42:23.959298
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "f22d70b8fcfa"
-down_revision = "f7374cd6e38d"
+down_revision = "795f6ea8ec45"
 branch_labels = None
 depends_on = None
 
