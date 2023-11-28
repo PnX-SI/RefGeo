@@ -56,7 +56,7 @@ class LAreas(db.Model):
     area_code = db.Column(db.Unicode)
     geom = db.Column(Geometry("MULTIPOLYGON"))
     centroid = db.Column(Geometry("POINT"))
-    geojson_4326 = deferred(db.Column(db.Unicode))
+    geom_4326 = deferred(db.Column(Geometry("MULTIPOLYGON", 4326)))
     source = db.Column(db.Unicode)
     enable = db.Column(db.Boolean, nullable=False, default=True)
     meta_create_date = db.Column(db.DateTime, default=datetime.now)
