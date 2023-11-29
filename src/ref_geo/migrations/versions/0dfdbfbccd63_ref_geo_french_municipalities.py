@@ -10,6 +10,7 @@ from shutil import copyfileobj
 from ref_geo.migrations.utils import (
     schema,
     delete_area_with_type,
+    geom_4326_exists,
 )
 from utils_flask_sqla.migrations.utils import logger, open_remote_file
 
@@ -59,24 +60,44 @@ def upgrade():
         logger.info("Inserting municipalities data in temporary table…")
         cursor.copy_expert(f"COPY {schema}.{temp_table_name} FROM STDIN", geofile)
     logger.info("Copy municipalities in l_areas…")
-    op.execute(
-        f"""
-        INSERT INTO {schema}.l_areas (
-            id_type,
-            area_code,
-            area_name,
-            geom,
-            geojson_4326
+    if geom_4326_exists():
+        op.execute(
+            f"""
+            INSERT INTO {schema}.l_areas (
+                id_type,
+                area_code,
+                area_name,
+                geom,
+                geom_4326
+            )
+            SELECT
+                {schema}.get_id_area_type('COM') AS id_type,
+                insee_com,
+                nom_com,
+                ST_TRANSFORM(geom, Find_SRID('{schema}', 'l_areas', 'geom')),
+                ST_SetSRID(ST_GeomFromGeoJSON(geojson), 4326)
+            FROM {schema}.{temp_table_name}
+        """
         )
-        SELECT
-            {schema}.get_id_area_type('COM') AS id_type,
-            insee_com,
-            nom_com,
-            ST_TRANSFORM(geom, Find_SRID('{schema}', 'l_areas', 'geom')),
-            geojson
-        FROM {schema}.{temp_table_name}
-    """
-    )
+    else:
+        op.execute(
+            f"""
+            INSERT INTO {schema}.l_areas (
+                id_type,
+                area_code,
+                area_name,
+                geom,
+                geojson_4326
+            )
+            SELECT
+                {schema}.get_id_area_type('COM') AS id_type,
+                insee_com,
+                nom_com,
+                ST_TRANSFORM(geom, Find_SRID('{schema}', 'l_areas', 'geom')),
+                geojson
+            FROM {schema}.{temp_table_name}
+        """
+        )
     logger.info("Copy municipalities in li_municipalities…")
     op.execute(
         f"""

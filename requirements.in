@@ -1,8 +1,9 @@
 alembic
 flask>=2.1
 flask-sqlalchemy
+flask-marshmallow
 python-dotenv
 sqlalchemy<2
 utils-flask-sqlalchemy>=0.3.0
-utils-flask-sqlalchemy-geo>=0.2.4
+utils-flask-sqlalchemy-geo>=0.2.8
 psycopg2
