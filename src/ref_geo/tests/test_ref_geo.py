@@ -351,7 +351,6 @@ class TestRefGeo:
 
     def test_get_types(self):
         response = self.client.get(url_for("ref_geo.get_area_types"))
-        print(response.json)
         assert response.status_code == 200
 
     def test_get_types_by_code(self, area_commune):

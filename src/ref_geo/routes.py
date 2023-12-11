@@ -11,6 +11,7 @@ from werkzeug.exceptions import BadRequest
 
 from ref_geo.env import db
 from ref_geo.models import BibAreasTypes, LiMunicipalities, LAreas
+from ref_geo.schemas import AreaTypeSchema, MunicipalitySchema, AreaSchema
 
 
 routes = Blueprint("ref_geo", __name__)
@@ -26,11 +27,8 @@ altitude_stmt = sa.select(sa.column("altitude_min"), sa.column("altitude_max")).
 )
 
 geojson_intersect_filter = func.ST_Intersects(
-    LAreas.geom,
-    func.ST_Transform(
-        func.ST_SetSRID(func.ST_GeomFromGeoJSON(sa.bindparam("geojson")), 4326),
-        func.Find_SRID("ref_geo", "l_areas", "geom"),
-    ),
+    LAreas.geom_4326,
+    func.ST_SetSRID(func.ST_GeomFromGeoJSON(sa.bindparam("geojson")), 4326),
 )
 
 area_size_func = func.ST_Area(
@@ -76,10 +74,9 @@ def getGeoInfo():
 
     return jsonify(
         {
-            "areas": [
-                area.as_dict(fields=["id_area", "id_type", "area_code", "area_name"])
-                for area in areas.all()
-            ],
+            "areas": AreaSchema(only=["id_area", "id_type", "area_code", "area_name"]).dump(
+                areas.all(), many=True
+            ),
             "altitude": altitude,
         }
     )
@@ -138,17 +135,14 @@ def getAreasIntersection():
         response[id_type] = _areas[0].area_type.as_dict(fields=["type_code", "type_name"])
         response[id_type].update(
             {
-                "areas": [
-                    area.as_dict(
-                        fields=[
-                            "area_code",
-                            "area_name",
-                            "id_area",
-                            "id_type",
-                        ]
-                    )
-                    for area in _areas
-                ],
+                "areas": AreaSchema(
+                    only=[
+                        "area_code",
+                        "area_name",
+                        "id_area",
+                        "id_type",
+                    ]
+                ).dump(_areas, many=True)
             }
         )
 
@@ -169,16 +163,8 @@ def get_municipalities():
         q = q.filter(LiMunicipalities.nom_com.ilike("{}%".format(parameters.get("nom_com"))))
     limit = int(parameters.get("limit")) if parameters.get("limit") else 100
 
-    data = q.limit(limit)
-    return jsonify([d.as_dict() for d in data])
-
-
-def to_geojson(data):
-    features = []
-    for feature in data:
-        geometry = feature.pop("geojson_4326", None)
-        features.append({"type": "Feature", "properties": feature, "geometry": geometry})
-    return features
+    municipalities = q.limit(limit)
+    return jsonify(MunicipalitySchema().dump(municipalities, many=True))
 
 
 @routes.route("/areas", methods=["GET"])
@@ -223,20 +209,20 @@ def get_areas():
 
     limit = int(params.get("limit")[0]) if params.get("limit") else 100
 
-    data = q.limit(limit)
+    areas = q.limit(limit)
 
     # allow to format response
     format = request.args.get("format", default="", type=str)
 
     fields = {"area_type.type_code"}
     if format == "geojson":
-        fields |= {"+geojson_4326"}
-        data = data.options(undefer("geojson_4326"))
-    response = [d.as_dict(fields=fields) for d in data]
+        fields |= {"+geom_4326"}
+        areas = areas.options(undefer("geom_4326"))
+    response = AreaSchema(only=fields, as_geojson=format == "geojson").dump(areas.all(), many=True)
     if format == "geojson":
-        # format features as geojson according to standard
-        response = to_geojson(response)
-    return jsonify(response)
+        # retro-compat: return a list of Features instead of the FeatureCollection
+        response = response["features"]
+    return response
 
 
 @routes.route("/area_size", methods=["Post"])
@@ -296,4 +282,4 @@ def get_area_types():
         query = query.order_by(desc("type_name"))
     # FIELDS
     fields = ["type_name", "type_code", "id_type"]
-    return jsonify([d.as_dict(fields=fields) for d in query.all()])
+    return jsonify(AreaTypeSchema(only=fields).dump(query.all(), many=True))
