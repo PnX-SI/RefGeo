@@ -10,6 +10,7 @@ from alembic.script import ScriptDirectory
 
 from ref_geo.env import db
 from ref_geo.models import BibAreasTypes, LAreas
+from sqlalchemy import select
 
 
 polygon = {
@@ -42,7 +43,7 @@ def has_french_dem():
 
 @pytest.fixture(scope="function")
 def area_commune():
-    return BibAreasTypes.query.filter_by(type_code="COM").one()
+    return db.session.execute(select(BibAreasTypes).filter_by(type_code="COM")).scalar_one()
 
 
 @pytest.mark.usefixtures("client_class", "temporary_transaction")
@@ -302,7 +303,7 @@ class TestRefGeo:
         """
         type_code = area_commune.type_code
         id_type = area_commune.id_type
-        first_comm = LAreas.query.filter(LAreas.id_type == id_type).first()
+        first_comm = db.session.scalars(db.select(LAreas).where(LAreas.id_type == id_type)).first()
         # will test many responses are return
         response = self.client.get(
             url_for("ref_geo.get_areas"),
