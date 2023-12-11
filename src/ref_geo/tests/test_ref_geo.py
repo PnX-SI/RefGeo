@@ -57,11 +57,6 @@ def area_commune():
     return db.session.execute(select(BibAreasTypes).filter_by(type_code="COM")).scalar_one()
 
 
-@pytest.fixture(scope="class")
-def area_departement():
-    return db.session.execute(select(BibAreasTypes).filter_by(type_code="DEP")).scalar_one()
-
-
 @pytest.mark.usefixtures("client_class", "temporary_transaction")
 class TestRefGeo:
     expected_altitude = pytest.approx({"altitude_min": 984, "altitude_max": 2335}, rel=1e-2)
