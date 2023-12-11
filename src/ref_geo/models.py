@@ -26,6 +26,7 @@ class BibAreasTypes(db.Model):
     ref_name = db.Column(db.Unicode)
     ref_version = db.Column(db.Integer)
     num_version = db.Column(db.Unicode)
+    size_hierarchy = db.Column(db.Integer)
 
 
 cor_areas = db.Table(
