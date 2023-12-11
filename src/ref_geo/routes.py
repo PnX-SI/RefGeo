@@ -196,7 +196,7 @@ def get_areas():
     # change all args in a list of value
     params = {key: request.args.getlist(key) for key, value in request.args.items()}
 
-    q = (
+    query = (
         select(LAreas)
         .options(joinedload("area_type").load_only("type_code"))
         .order_by(LAreas.area_name.asc())
@@ -212,24 +212,24 @@ def get_areas():
             }
             return response, 400
         if enable_param == "true":
-            q = q.where(LAreas.enable == True)
+            query = query.where(LAreas.enable == True)
         elif enable_param == "false":
-            q = q.where(LAreas.enable == False)
+            query = query.where(LAreas.enable == False)
     else:
-        q = q.where(LAreas.enable == True)
+        query = query.where(LAreas.enable == True)
 
     if "id_type" in params:
-        q = q.where(LAreas.id_type.in_(params["id_type"]))
+        query = query.where(LAreas.id_type.in_(params["id_type"]))
 
     if "type_code" in params:
-        q = q.where(LAreas.area_type.has(BibAreasTypes.type_code.in_(params["type_code"])))
+        query = query.where(LAreas.area_type.has(BibAreasTypes.type_code.in_(params["type_code"])))
 
     if "area_name" in params:
-        q = q.where(LAreas.area_name.ilike("%{}%".format(params.get("area_name")[0])))
+        query = query.where(LAreas.area_name.ilike("%{}%".format(params.get("area_name")[0])))
 
     limit = int(params.get("limit")[0]) if params.get("limit") else 100
 
-    data = db.session.scalars(q.limit(limit)).unique().all()
+    data = db.session.scalars(query.limit(limit)).unique().all()
 
     # allow to format response
     format = request.args.get("format", default="", type=str)
@@ -237,7 +237,9 @@ def get_areas():
     fields = {"area_type.type_code"}
     if format == "geojson":
         fields |= {"+geojson_4326"}
-        data = data.options(undefer("geojson_4326"))
+        query = query.options(undefer("geojson_4326"))
+
+    data = db.session.scalars(query).unique().all()
     response = [d.as_dict(fields=fields) for d in data]
     if format == "geojson":
         # format features as geojson according to standard
