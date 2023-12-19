@@ -271,7 +271,7 @@ def get_area_types():
     query = select(BibAreasTypes)
     # GET ONLY INFO FOR A SPECIFIC CODE
     if type_code:
-        code_exists = db.session.scalars(
+        code_exists = db.session.execute(
             select(BibAreasTypes).where(BibAreasTypes.type_code == type_code)
         ).scalar_one_or_none()
         if not code_exists:
