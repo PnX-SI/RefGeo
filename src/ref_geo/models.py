@@ -2,7 +2,9 @@ from datetime import datetime
 
 from geoalchemy2 import Geometry
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import deferred
+from sqlalchemy.orm import deferred, column_property
+from sqlalchemy.sql import func
+
 from sqlalchemy.dialects.postgresql import JSONB
 
 from utils_flask_sqla.serializers import serializable
@@ -24,6 +26,25 @@ class BibAreasTypes(db.Model):
     ref_name = db.Column(db.Unicode)
     ref_version = db.Column(db.Integer)
     num_version = db.Column(db.Unicode)
+    size_hierarchy = db.Column(db.Integer)
+
+
+cor_areas = db.Table(
+    "cor_areas",
+    db.Column(
+        "id_area_group",
+        db.Integer,
+        ForeignKey("ref_geo.l_areas.id_area"),
+        primary_key=True,
+    ),
+    db.Column(
+        "id_area",
+        db.Integer,
+        ForeignKey("ref_geo.l_areas.id_area"),
+        primary_key=True,
+    ),
+    schema="ref_geo",
+)
 
 
 @geoserializable
@@ -34,14 +55,22 @@ class LAreas(db.Model):
     id_type = db.Column(db.Integer, ForeignKey("ref_geo.bib_areas_types.id_type"))
     area_name = db.Column(db.Unicode)
     area_code = db.Column(db.Unicode)
-    geom = db.Column(Geometry("GEOMETRY"))
+    geom = db.Column(Geometry("MULTIPOLYGON"))
     centroid = db.Column(Geometry("POINT"))
-    geojson_4326 = deferred(db.Column(db.Unicode))
+    geom_4326 = deferred(db.Column(Geometry("MULTIPOLYGON", 4326)))
     source = db.Column(db.Unicode)
     enable = db.Column(db.Boolean, nullable=False, default=True)
     meta_create_date = db.Column(db.DateTime, default=datetime.now)
     meta_update_date = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     area_type = db.relationship("BibAreasTypes", lazy="select")
+    parent_areas = db.relationship(
+        "LAreas",
+        secondary=cor_areas,
+        primaryjoin=id_area == cor_areas.c.id_area,
+        secondaryjoin=cor_areas.c.id_area_group == id_area,
+        backref="child_areas",
+        lazy="raise",
+    )
 
 
 @serializable
@@ -57,19 +86,40 @@ class BibLinearsTypes(db.Model):
     num_version = db.Column(db.Unicode(length=50))
 
 
-class CorLinearGroup(db.Model):
-    __table_name__ = "cor_linear_group"
-    __table_args__ = {"schema": "ref_geo"}
-    id_group = db.Column(
+cor_linear_group = db.Table(
+    "cor_linear_group",
+    db.Column(
+        "id_group",
         db.Integer,
         ForeignKey("ref_geo.t_linear_groups.id_group"),
         primary_key=True,
-    )
-    id_linear = db.Column(
+    ),
+    db.Column(
+        "id_linear",
         db.Integer,
         ForeignKey("ref_geo.l_linears.id_linear"),
         primary_key=True,
-    )
+    ),
+    schema="ref_geo",
+)
+
+
+cor_linear_area = db.Table(
+    "cor_linear_area",
+    db.Column(
+        "id_area",
+        db.Integer,
+        ForeignKey("ref_geo.l_areas.id_area"),
+        primary_key=True,
+    ),
+    db.Column(
+        "id_linear",
+        db.Integer,
+        ForeignKey("ref_geo.l_linears.id_linear"),
+        primary_key=True,
+    ),
+    schema="ref_geo",
+)
 
 
 @geoserializable
@@ -90,8 +140,9 @@ class LLinears(db.Model):
     meta_update_date = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     type = db.relationship("BibLinearsTypes")
     groups = db.relationship(
-        "TLinearGroups", secondary=CorLinearGroup.__table__, backref="linears"
+        "TLinearGroups", secondary=cor_linear_group, backref="linears", lazy="raise"
     )
+    areas = db.relationship("LAreas", secondary=cor_linear_area, backref="linears", lazy="raise")
 
 
 @serializable
@@ -104,10 +155,45 @@ class TLinearGroups(db.Model):
 
 
 @serializable
+class BibPointsTypes(db.Model):
+    __tablename__ = "bib_points_types"
+    __table_args__ = {"schema": "ref_geo"}
+    id_type = db.Column(db.Integer, primary_key=True)
+    type_name = db.Column(db.Unicode(length=200), nullable=False)
+    type_code = db.Column(db.Unicode(length=25), nullable=False)
+    type_desc = db.Column(db.Unicode)
+    ref_name = db.Column(db.Unicode(length=200))
+    ref_version = db.Column(db.Integer)
+    num_version = db.Column(db.Unicode(length=50))
+
+
+@geoserializable
+class LPoints(db.Model):
+    __tablename__ = "l_points"
+    __table_args__ = {"schema": "ref_geo"}
+    id_point = db.Column(db.Integer, primary_key=True)
+    id_type = db.Column(db.Integer, ForeignKey("ref_geo.bib_points_types.id_type"), nullable=False)
+    point_name = db.Column(db.Unicode(length=250))
+    point_code = db.Column(db.Unicode(length=25))
+    geom = db.Column(Geometry("GEOMETRY"))
+    source = db.Column(db.Unicode(length=250))
+    enable = db.Column(db.Boolean, nullable=False, default=True)
+    additional_data = db.Column(JSONB)
+    meta_create_date = db.Column(db.DateTime, default=datetime.now)
+    meta_update_date = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    type = db.relationship("BibPointsTypes")
+
+    geom_4326 = column_property(
+        func.ST_TRANSFORM(geom, 4326),
+        deferred=True,
+    )
+
+
+@serializable
 class LiMunicipalities(db.Model):
     __tablename__ = "li_municipalities"
     __table_args__ = {"schema": "ref_geo"}
-    id_municipality = db.Column(db.Integer, primary_key=True)
+    id_municipality = db.Column(db.String(25), primary_key=True)
     id_area = db.Column(db.Integer)
     status = db.Column(db.Unicode)
     insee_com = db.Column(db.Unicode)

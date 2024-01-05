@@ -4,24 +4,20 @@ import json
 from flask import Blueprint, request, current_app
 from flask.json import jsonify
 import sqlalchemy as sa
-from sqlalchemy import func, distinct, asc, desc
+from sqlalchemy import func, select, asc, desc
 from sqlalchemy.sql import text
 from sqlalchemy.orm import joinedload, undefer
 from werkzeug.exceptions import BadRequest
 
 from ref_geo.env import db
 from ref_geo.models import BibAreasTypes, LiMunicipalities, LAreas
+from ref_geo.schemas import AreaTypeSchema, MunicipalitySchema, AreaSchema
 
 
 routes = Blueprint("ref_geo", __name__)
 
 
-altitude_stmt = sa.select(
-    [
-        sa.column("altitude_min"),
-        sa.column("altitude_max"),
-    ]
-).select_from(
+altitude_stmt = sa.select(sa.column("altitude_min"), sa.column("altitude_max")).select_from(
     func.ref_geo.fct_get_altitude_intersection(
         func.ST_SetSRID(
             func.ST_GeomFromGeoJSON(sa.bindparam("geojson")),
@@ -31,11 +27,8 @@ altitude_stmt = sa.select(
 )
 
 geojson_intersect_filter = func.ST_Intersects(
-    LAreas.geom,
-    func.ST_Transform(
-        func.ST_SetSRID(func.ST_GeomFromGeoJSON(sa.bindparam("geojson")), 4326),
-        func.Find_SRID("ref_geo", "l_areas", "geom"),
-    ),
+    LAreas.geom_4326,
+    func.ST_SetSRID(func.ST_GeomFromGeoJSON(sa.bindparam("geojson")), 4326),
 )
 
 area_size_func = func.ST_Area(
@@ -65,8 +58,10 @@ def getGeoInfo():
         raise BadRequest("Missing 'geometry' in request payload")
     geojson = json.dumps(geojson)
 
-    areas = LAreas.query.filter_by(enable=True).filter(
-        geojson_intersect_filter.params(geojson=geojson)
+    areas = (
+        select(LAreas)
+        .filter_by(enable=True)
+        .filter(geojson_intersect_filter.params(geojson=geojson))
     )
     if "area_type" in request.json:
         areas = areas.join(BibAreasTypes).filter_by(type_code=request.json["area_type"])
@@ -81,10 +76,9 @@ def getGeoInfo():
 
     return jsonify(
         {
-            "areas": [
-                area.as_dict(fields=["id_area", "id_type", "area_code", "area_name"])
-                for area in areas.all()
-            ],
+            "areas": AreaSchema(only=["id_area", "id_type", "area_code", "area_name"]).dump(
+                db.session.scalars(areas).unique().all(), many=True
+            ),
             "altitude": altitude,
         }
     )
@@ -124,8 +118,10 @@ def getAreasIntersection():
         raise BadRequest("Missing 'geometry' in request payload")
     geojson = json.dumps(geojson)
 
-    areas = LAreas.query.filter_by(enable=True).filter(
-        geojson_intersect_filter.params(geojson=geojson)
+    areas = (
+        select(LAreas)
+        .filter_by(enable=True)
+        .filter(geojson_intersect_filter.params(geojson=geojson))
     )
     if "area_type" in request.json:
         areas = areas.join(BibAreasTypes).filter_by(type_code=request.json["area_type"])
@@ -138,22 +134,21 @@ def getAreasIntersection():
     areas = areas.order_by(LAreas.id_type)
 
     response = {}
-    for id_type, _areas in groupby(areas.all(), key=lambda area: area.id_type):
+    for id_type, _areas in groupby(
+        db.session.scalars(areas).unique().all(), key=lambda area: area.id_type
+    ):
         _areas = list(_areas)
         response[id_type] = _areas[0].area_type.as_dict(fields=["type_code", "type_name"])
         response[id_type].update(
             {
-                "areas": [
-                    area.as_dict(
-                        fields=[
-                            "area_code",
-                            "area_name",
-                            "id_area",
-                            "id_type",
-                        ]
-                    )
-                    for area in _areas
-                ],
+                "areas": AreaSchema(
+                    only=[
+                        "area_code",
+                        "area_name",
+                        "id_area",
+                        "id_type",
+                    ]
+                ).dump(_areas, many=True)
             }
         )
 
@@ -168,22 +163,14 @@ def get_municipalities():
     """
     parameters = request.args
 
-    q = db.session.query(LiMunicipalities).order_by(LiMunicipalities.nom_com.asc())
+    q = select(LiMunicipalities).order_by(LiMunicipalities.nom_com.asc())
 
     if "nom_com" in parameters:
-        q = q.filter(LiMunicipalities.nom_com.ilike("{}%".format(parameters.get("nom_com"))))
+        q = q.where(LiMunicipalities.nom_com.ilike("{}%".format(parameters.get("nom_com"))))
     limit = int(parameters.get("limit")) if parameters.get("limit") else 100
 
-    data = q.limit(limit)
-    return jsonify([d.as_dict() for d in data])
-
-
-def to_geojson(data):
-    features = []
-    for feature in data:
-        geometry = feature.pop("geojson_4326", None)
-        features.append({"type": "Feature", "properties": feature, "geometry": geometry})
-    return features
+    municipalities = db.session.scalars(q.limit(limit)).all()
+    return jsonify(MunicipalitySchema().dump(municipalities, many=True))
 
 
 @routes.route("/areas", methods=["GET"])
@@ -195,8 +182,8 @@ def get_areas():
     # change all args in a list of value
     params = {key: request.args.getlist(key) for key, value in request.args.items()}
 
-    q = (
-        db.session.query(LAreas)
+    query = (
+        select(LAreas)
         .options(joinedload("area_type").load_only("type_code"))
         .order_by(LAreas.area_name.asc())
     )
@@ -211,37 +198,38 @@ def get_areas():
             }
             return response, 400
         if enable_param == "true":
-            q = q.filter(LAreas.enable == True)
+            query = query.where(LAreas.enable == True)
         elif enable_param == "false":
-            q = q.filter(LAreas.enable == False)
+            query = query.where(LAreas.enable == False)
     else:
-        q = q.filter(LAreas.enable == True)
+        query = query.where(LAreas.enable == True)
 
     if "id_type" in params:
-        q = q.filter(LAreas.id_type.in_(params["id_type"]))
+        query = query.where(LAreas.id_type.in_(params["id_type"]))
 
     if "type_code" in params:
-        q = q.filter(LAreas.area_type.has(BibAreasTypes.type_code.in_(params["type_code"])))
+        query = query.where(LAreas.area_type.has(BibAreasTypes.type_code.in_(params["type_code"])))
 
     if "area_name" in params:
-        q = q.filter(LAreas.area_name.ilike("%{}%".format(params.get("area_name")[0])))
+        query = query.where(LAreas.area_name.ilike("%{}%".format(params.get("area_name")[0])))
 
     limit = int(params.get("limit")[0]) if params.get("limit") else 100
-
-    data = q.limit(limit)
 
     # allow to format response
     format = request.args.get("format", default="", type=str)
 
     fields = {"area_type.type_code"}
     if format == "geojson":
-        fields |= {"+geojson_4326"}
-        data = data.options(undefer("geojson_4326"))
-    response = [d.as_dict(fields=fields) for d in data]
+        fields |= {"+geom_4326"}
+        query = query.options(undefer("geom_4326"))
+
+    areas = db.session.scalars(query.limit(limit)).unique().all()
+
+    response = AreaSchema(only=fields, as_geojson=format == "geojson").dump(areas, many=True)
     if format == "geojson":
-        # format features as geojson according to standard
-        response = to_geojson(response)
-    return jsonify(response)
+        # retro-compat: return a list of Features instead of the FeatureCollection
+        response = response["features"]
+    return response
 
 
 @routes.route("/area_size", methods=["Post"])
@@ -261,7 +249,7 @@ def get_area_size():
         raise BadRequest("Missing 'geometry' in request payload")
     geojson = json.dumps(geojson)
 
-    query = db.session.query(area_size_func.params(geojson=geojson))
+    query = select(area_size_func.params(geojson=geojson))
 
     return jsonify(db.session.execute(query).scalar())
 
@@ -280,20 +268,18 @@ def get_area_types():
     type_code = request.args.get("code")
     type_name = request.args.get("name")
     sort = request.args.get("sort")
-    query = db.session.query(BibAreasTypes)
+    query = select(BibAreasTypes)
     # GET ONLY INFO FOR A SPECIFIC CODE
     if type_code:
-        code_exists = (
-            db.session.query(BibAreasTypes)
-            .filter(BibAreasTypes.type_code == type_code)
-            .one_or_none()
-        )
+        code_exists = db.session.execute(
+            select(BibAreasTypes).where(BibAreasTypes.type_code == type_code)
+        ).scalar_one_or_none()
         if not code_exists:
             raise BadRequest("This area type code does not exist")
-        query = query.filter(BibAreasTypes.type_code == type_code)
+        query = query.where(BibAreasTypes.type_code == type_code)
     # FILTER BY NAME
     if type_name:
-        query = query.filter(BibAreasTypes.type_name.ilike("%{}%".format(type_name)))
+        query = query.where(BibAreasTypes.type_name.ilike("%{}%".format(type_name)))
     # SORT
     if sort == "asc":
         query = query.order_by(asc("type_name"))
@@ -301,4 +287,4 @@ def get_area_types():
         query = query.order_by(desc("type_name"))
     # FIELDS
     fields = ["type_name", "type_code", "id_type"]
-    return jsonify([d.as_dict(fields=fields) for d in query.all()])
+    return jsonify(AreaTypeSchema(only=fields).dump(db.session.scalars(query).all(), many=True))

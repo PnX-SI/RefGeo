@@ -14,12 +14,26 @@ from utils_flask_sqla.migrations.utils import logger
 schema = "ref_geo"
 
 
-"""
-Supprimer les zones d’un type donnée, e.g. 'DEP', 'COM', …
-"""
+def geom_4326_exists():
+    return (
+        op.get_bind()
+        .execute(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.COLUMNS
+                WHERE table_schema = 'ref_geo' AND table_name='l_areas' AND column_name = 'geom_4326'
+            )
+            """
+        )
+        .scalar()
+    )
 
 
 def delete_area_with_type(area_type):
+    """
+    Supprimer les zones d’un type donnée, e.g. 'DEP', 'COM', …
+    """
     op.execute(
         f"""
         DELETE FROM {schema}.l_areas la
@@ -52,18 +66,33 @@ def create_temporary_grids_table(schema, temp_table_name):
 
 def insert_grids_and_drop_temporary_table(schema, temp_table_name, area_type):
     logger.info("Copy grids in l_areas…")
-    op.execute(
-        f"""
-        INSERT INTO {schema}.l_areas (id_type, area_code, area_name, geom, geojson_4326)
-        SELECT
-            {schema}.get_id_area_type('{area_type}') AS id_type,
-            cd_sig,
-            code,
-            ST_Transform(geom, Find_SRID('{schema}', 'l_areas', 'geom')),
-            geojson
-        FROM {schema}.{temp_table_name}
-    """
-    )
+    if geom_4326_exists():
+        # We insert geom and geom_4326 to avoid double conversion like 2154 → 3312 → 4326
+        op.execute(
+            f"""
+            INSERT INTO {schema}.l_areas (id_type, area_code, area_name, geom, geom_4326)
+            SELECT
+                {schema}.get_id_area_type('{area_type}') AS id_type,
+                cd_sig,
+                code,
+                ST_Transform(geom, Find_SRID('{schema}', 'l_areas', 'geom')),
+                ST_SetSRID(ST_GeomFromGeoJSON(geojson), 4326)
+            FROM {schema}.{temp_table_name}
+        """
+        )
+    else:  # legacy column geojson_4326
+        op.execute(
+            f"""
+            INSERT INTO {schema}.l_areas (id_type, area_code, area_name, geom, geojson_4326)
+            SELECT
+                {schema}.get_id_area_type('{area_type}') AS id_type,
+                cd_sig,
+                code,
+                ST_Transform(geom, Find_SRID('{schema}', 'l_areas', 'geom')),
+                geojson
+            FROM {schema}.{temp_table_name}
+        """
+        )
     logger.info("Copy grids in li_grids…")
     op.execute(
         f"""
