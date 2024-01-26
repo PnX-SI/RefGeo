@@ -4,6 +4,7 @@ Revision ID: d02f4563bebe
 Create Date: 2021-11-23 12:06:37.699867
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 from shutil import copyfileobj
