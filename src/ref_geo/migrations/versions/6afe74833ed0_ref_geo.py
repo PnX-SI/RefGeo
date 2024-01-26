@@ -4,6 +4,7 @@ Revision ID: 6afe74833ed0
 Create Date: 2021-09-27 18:07:43.582936
 
 """
+
 import importlib
 
 from alembic import op, context
