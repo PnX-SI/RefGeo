@@ -26,6 +26,7 @@ class BibAreasTypes(db.Model):
     ref_name = db.Column(db.Unicode)
     ref_version = db.Column(db.Integer)
     num_version = db.Column(db.Unicode)
+    size_hierarchy = db.Column(db.Integer)
 
 
 cor_areas = db.Table(
@@ -54,9 +55,9 @@ class LAreas(db.Model):
     id_type = db.Column(db.Integer, ForeignKey("ref_geo.bib_areas_types.id_type"))
     area_name = db.Column(db.Unicode)
     area_code = db.Column(db.Unicode)
-    geom = db.Column(Geometry("GEOMETRY"))
+    geom = db.Column(Geometry("MULTIPOLYGON"))
     centroid = db.Column(Geometry("POINT"))
-    geojson_4326 = deferred(db.Column(db.Unicode))
+    geom_4326 = deferred(db.Column(Geometry("MULTIPOLYGON", 4326)))
     source = db.Column(db.Unicode)
     enable = db.Column(db.Boolean, nullable=False, default=True)
     meta_create_date = db.Column(db.DateTime, default=datetime.now)
@@ -192,7 +193,7 @@ class LPoints(db.Model):
 class LiMunicipalities(db.Model):
     __tablename__ = "li_municipalities"
     __table_args__ = {"schema": "ref_geo"}
-    id_municipality = db.Column(db.Integer, primary_key=True)
+    id_municipality = db.Column(db.String(25), primary_key=True)
     id_area = db.Column(db.Integer)
     status = db.Column(db.Unicode)
     insee_com = db.Column(db.Unicode)

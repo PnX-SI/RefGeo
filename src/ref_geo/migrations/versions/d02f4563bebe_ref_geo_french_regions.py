@@ -4,6 +4,7 @@ Revision ID: d02f4563bebe
 Create Date: 2021-11-23 12:06:37.699867
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 from shutil import copyfileobj
@@ -11,6 +12,7 @@ from shutil import copyfileobj
 from ref_geo.migrations.utils import (
     schema,
     delete_area_with_type,
+    geom_4326_exists,
 )
 from utils_flask_sqla.migrations.utils import logger, open_remote_file
 
@@ -52,24 +54,44 @@ def upgrade():
         logger.info("Inserting regions data in temporary table…")
         cursor.copy_expert(f"COPY {schema}.{temp_table_name} FROM STDIN", geofile)
     logger.info("Copy regions in l_areas…")
-    op.execute(
-        f"""
-        INSERT INTO {schema}.l_areas (
-            id_type,
-            area_code,
-            area_name,
-            geom,
-            geojson_4326
+    if geom_4326_exists():
+        op.execute(
+            f"""
+            INSERT INTO {schema}.l_areas (
+                id_type,
+                area_code,
+                area_name,
+                geom,
+                geom_4326
+            )
+            SELECT
+                {schema}.get_id_area_type('REG') as id_type,
+                insee_reg,
+                nom,
+                ST_Transform(geom, Find_SRID('{schema}', 'l_areas', 'geom')),
+                ST_SetSRID(ST_Transform(geom, 4326), 4326)
+            FROM {schema}.{temp_table_name}
+        """
         )
-        SELECT
-            {schema}.get_id_area_type('REG') as id_type,
-            insee_reg,
-            nom,
-            ST_Transform(geom, Find_SRID('{schema}', 'l_areas', 'geom')),
-            public.ST_asgeojson(public.st_transform(geom, 4326))
-        FROM {schema}.{temp_table_name}
-    """
-    )
+    else:
+        op.execute(
+            f"""
+            INSERT INTO {schema}.l_areas (
+                id_type,
+                area_code,
+                area_name,
+                geom,
+                geojson_4326
+            )
+            SELECT
+                {schema}.get_id_area_type('REG') as id_type,
+                insee_reg,
+                nom,
+                ST_Transform(geom, Find_SRID('{schema}', 'l_areas', 'geom')),
+                ST_Transform(geom, 4326)
+            FROM {schema}.{temp_table_name}
+        """
+        )
     logger.info("Re-indexing…")
     op.execute(f"REINDEX INDEX {schema}.index_l_areas_geom")
     logger.info("Dropping temporary regions table…")
