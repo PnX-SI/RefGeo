@@ -1,9 +1,9 @@
 alembic
-flask>=2.1
+flask>=3.0
 flask-sqlalchemy
 flask-marshmallow
 python-dotenv
 sqlalchemy>=1.4,<2
-utils-flask-sqlalchemy>=0.3.0
-utils-flask-sqlalchemy-geo>=0.2.8
+utils-flask-sqlalchemy>=0.4.0
+utils-flask-sqlalchemy-geo>=0.3.0
 psycopg2
