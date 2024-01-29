@@ -47,24 +47,6 @@ cor_areas = db.Table(
 )
 
 
-cor_areas = db.Table(
-    "cor_areas",
-    db.Column(
-        "id_area_group",
-        db.Integer,
-        ForeignKey("ref_geo.l_areas.id_area"),
-        primary_key=True,
-    ),
-    db.Column(
-        "id_area",
-        db.Integer,
-        ForeignKey("ref_geo.l_areas.id_area"),
-        primary_key=True,
-    ),
-    schema="ref_geo",
-)
-
-
 @geoserializable
 class LAreas(db.Model):
     __tablename__ = "l_areas"
