@@ -1,12 +1,19 @@
 CHANGELOG
 =========
 
-1.4.1 (2024-01-29)
+1.5.0 (2024-01-29)
 ------------------
+
+- Ajout de la hiérachisation des types de zonages géographiques, avec l'ajout du champs `ref_geo.bib_areas_types.size_hierarchy` (#11)
+- Remplacement du champs `l_areas.geojson_4326` par `l_areas.geom_4326` et création de triggers permettant de garder en cohérence les champs `geom` et `geom_4326` (#6)
+- Mise à jour SQLAlchemy version 1.3 à 1.4 (#16)
+- Mise à jour de Flask version 2 à 3
+- Abandon du support de Debian 10 (#12)
+- Mise à jour du linter Black à la version 24 (#19)
 
 **🐛 Corrections**
 
-* Nom des communes (branche alembic `ref_geo_fr_municipalities`): correction des caractères `¼` et `½` en `Œ` et  `œ`
+- Correction des caractères `¼` et `½` en `Œ` et  `œ` dans les noms des communes (branche alembic `ref_geo_fr_municipalities`) (#8)
 
 
 1.4.0 (2023-09-14)
@@ -14,13 +21,13 @@ CHANGELOG
 
 **🚀 Nouveautés**
 
-* Ajout d'un référentiel de couches de *points* (table des types de points et table de géometries + modèles) (#12)
-* Ajout de tables de correspondance entre les linéaires et les zonages (+ relations associées dans les modèles) (#12)
+- Ajout d'un référentiel de couches de *points* (table des types de points et table de géometries + modèles) (#12)
+- Ajout de tables de correspondance entre les linéaires et les zonages (+ relations associées dans les modèles) (#12)
 
 **⚠️ Notes de version**
  
-* Les nouvelles tables de correspondances `ref_geo.cor_areas` et `ref_geo.cor_linear_area` ne sont pas remplies par défaut pour ne pas alourdir la base de données et ses calculs, alors qu'elles ne sont pas utilisées actuellement par GeoNature
-* Exemple de requête pour remplir la table `ref_geo.cor_area_linear` pour les régions, départements et communes :
+- Les nouvelles tables de correspondances `ref_geo.cor_areas` et `ref_geo.cor_linear_area` ne sont pas remplies par défaut pour ne pas alourdir la base de données et ses calculs, alors qu'elles ne sont pas utilisées actuellement par GeoNature
+- Exemple de requête pour remplir la table `ref_geo.cor_area_linear` pour les régions, départements et communes :
   ```
   INSERT INTO ref_geo.cor_linear_area (id_linear, id_area)
   SELECT  id_linear, id_area
@@ -35,10 +42,10 @@ CHANGELOG
 
 **🚀 Nouveautés**
 
-* Ajout des routes historiquement créées pour GeoNature
-* Possibilité de lancer le RefGeo comme application Flask autonome
-* Support de SQLAlchemy 1.4
-* Intégration continue avec ``pytest``
+- Ajout des routes historiquement créées pour GeoNature
+- Possibilité de lancer le RefGeo comme application Flask autonome
+- Support de SQLAlchemy 1.4
+- Intégration continue avec ``pytest``
 
 
 1.2.1 (2022-11-21)
