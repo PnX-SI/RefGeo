@@ -5,6 +5,7 @@ Revises: 0dfdbfbccd63
 Create Date: 2023-02-28 13:25:40.908589
 
 """
+
 from alembic import op
 from utils_flask_sqla.migrations.utils import logger
 

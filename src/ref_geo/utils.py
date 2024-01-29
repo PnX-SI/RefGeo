@@ -2,7 +2,6 @@
     methodes pour ref_geo
         - recupération du srid local
 """
-from sqlalchemy import text
 
 from sqlalchemy import text
 
