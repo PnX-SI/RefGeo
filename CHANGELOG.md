@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-1.5.0 (2024-01-29)
+1.5.1 (2024-01-29)
 ------------------
 
 - Ajout de la hiérachisation des types de zonages géographiques, avec l'ajout du champs `ref_geo.bib_areas_types.size_hierarchy` (#11)
