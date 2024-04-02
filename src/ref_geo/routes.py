@@ -6,7 +6,7 @@ from flask.json import jsonify
 import sqlalchemy as sa
 from sqlalchemy import func, select, asc, desc
 from sqlalchemy.sql import text
-from sqlalchemy.orm import joinedload, undefer
+from sqlalchemy.orm import joinedload, undefer, defer
 from werkzeug.exceptions import BadRequest
 
 from ref_geo.env import db
@@ -182,6 +182,10 @@ def get_areas():
     # change all args in a list of value
     params = {key: request.args.getlist(key) for key, value in request.args.items()}
 
+    # allow to format response
+    output_format = request.args.get("format", default="", type=str)
+
+    marsh_params = dict(as_geojson=output_format == "geojson")
     query = (
         select(LAreas)
         .options(joinedload("area_type").load_only("type_code"))
@@ -213,20 +217,26 @@ def get_areas():
     if "area_name" in params:
         query = query.where(LAreas.area_name.ilike("%{}%".format(params.get("area_name")[0])))
 
+    without_geom = False
+    if "without_geom" in params:
+        without_geom = params.get("without_geom")[0]
+        query = query.options(defer("geom"))
+        marsh_params["exclude"] = ["geom"]
+
     limit = int(params.get("limit")[0]) if params.get("limit") else 100
 
-    # allow to format response
-    format = request.args.get("format", default="", type=str)
-
     fields = {"area_type.type_code"}
-    if format == "geojson":
+    if output_format == "geojson" and not without_geom:
         fields |= {"+geom_4326"}
         query = query.options(undefer("geom_4326"))
 
     areas = db.session.scalars(query.limit(limit)).unique().all()
 
-    response = AreaSchema(only=fields, as_geojson=format == "geojson").dump(areas, many=True)
-    if format == "geojson":
+    marsh_params["only"] = fields
+
+    response = AreaSchema(**marsh_params).dump(areas, many=True)
+
+    if output_format == "geojson":
         # retro-compat: return a list of Features instead of the FeatureCollection
         response = response["features"]
     return response
