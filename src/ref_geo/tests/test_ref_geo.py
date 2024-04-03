@@ -296,6 +296,21 @@ class TestRefGeo:
         assert response.status_code == 200
         assert response.json[0]["area_name"] == CITY
 
+    def test_get_without_geom(self):
+        response = self.client.get(
+            url_for("ref_geo.get_areas"), query_string={"without_geom": "false"}
+        )
+        assert response.status_code == 200
+        for area in response.json:
+            assert "geom" in area
+
+        response = self.client.get(
+            url_for("ref_geo.get_areas"), query_string={"without_geom": "true"}
+        )
+        assert response.status_code == 200
+        for area in response.json:
+            assert not "geom" in area
+
     def test_get_areas_as_geojson(self, area_commune):
         """
         This test can't try to get only one commune
