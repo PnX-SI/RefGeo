@@ -173,6 +173,7 @@ def get_municipalities():
     return jsonify(MunicipalitySchema().dump(municipalities, many=True))
 
 
+# FIXME: Transform to post and change the post /areas
 @routes.route("/areas", methods=["GET"])
 def get_areas():
     """
@@ -180,12 +181,12 @@ def get_areas():
     .. :quickref: Ref Geo;
     """
     # change all args in a list of value
-    params = {key: request.args.getlist(key) for key, value in request.args.items()}
+    params = request.args
 
     # allow to format response
     output_format = request.args.get("format", default="", type=str)
 
-    marsh_params = dict(as_geojson=output_format == "geojson")
+    marsh_params = dict(as_geojson=(output_format == "geojson"))
     query = (
         select(LAreas)
         .options(joinedload("area_type").load_only("type_code"))
@@ -193,7 +194,7 @@ def get_areas():
     )
 
     if "enable" in params:
-        enable_param = params["enable"][0].lower()
+        enable_param = params["enable"].lower()
         accepted_enable_values = ["true", "false", "all"]
         if enable_param not in accepted_enable_values:
             response = {
@@ -209,17 +210,18 @@ def get_areas():
         query = query.where(LAreas.enable == True)
 
     if "id_type" in params:
-        query = query.where(LAreas.id_type.in_(params["id_type"]))
+        query = query.where(LAreas.id_type.in_(params.getlist("id_type")))
 
     if "type_code" in params:
-        query = query.where(LAreas.area_type.has(BibAreasTypes.type_code.in_(params["type_code"])))
+        query = query.where(
+            LAreas.area_type.has(BibAreasTypes.type_code.in_(params.getlist("type_code")))
+        )
 
     if "area_name" in params:
-        query = query.where(LAreas.area_name.ilike("%{}%".format(params.get("area_name")[0])))
+        query = query.where(LAreas.area_name.ilike("%{}%".format(params.get("area_name"))))
 
-    without_geom = False
-    if "without_geom" in params:
-        without_geom = params.get("without_geom")[0]
+    without_geom = params.get("without_geom", False, lambda x: x == "true")
+    if without_geom:
         query = query.options(defer("geom"))
         marsh_params["exclude"] = ["geom"]
 
