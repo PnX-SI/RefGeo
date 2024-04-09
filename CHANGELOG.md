@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+1.5.2 (2024-09-04)
+------------------
+
+**🚀 Nouveautés**
+
+ - Possibilité d'appeler la route `GET/areas` sans retourner les géométries (#22)
+
 1.5.1 (2024-01-29)
 ------------------
 
