@@ -7,6 +7,18 @@ CHANGELOG
 - Ajout des Mailles officielles manquantes, utilisées par la nouvelle version du
 référentiel de sensibilité (2x2km, 20x20km, 50x50km)
 
+**Note de version**
+
+Pour ajouter les nouvelles mailles, éxécuter les commandes suivantes:
+
+```sh
+source venv/bin/activate
+export SQLALCHEMY_DATABASE_URI="postgresql://user:password@localhost:543database"
+cd src/ref_geo/migrations
+alembic upgrade ref_geo_inpn_grids_2@head  # Insertion du maillage 2x2km dl’hexagone fourni par l’INPN
+alembic upgrade ref_geo_inpn_grids_20@head  # Insertion du maillage 20x20kde l’hexagone fourni par l’INPN
+alembic upgrade ref_geo_inpn_grids_50@head  # Insertion du maillage 50x50kde l’hexagone fourni par l’INPN
+```
 
 1.5.3 (2024-05-23)
 ------------------
@@ -17,7 +29,6 @@ référentiel de sensibilité (2x2km, 20x20km, 50x50km)
 
 
 1.5.2 (2024-09-10)
->>>>>>> 7d697bc (update CHANGELOG/VERSION)
 ------------------
 
 **🚀 Nouveautés**
@@ -131,5 +142,6 @@ référentiel de sensibilité (2x2km, 20x20km, 50x50km)
 Externalisation du référentiel géographique de GeoNature 2.9.2.
 
 **🚀 Nouveautés**
+
 
 * Le SRID local est déterminé automatiquement à partir du SRID de la colonne ``ref_geo.l_areas.geom``.
