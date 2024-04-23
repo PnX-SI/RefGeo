@@ -1,20 +1,28 @@
 CHANGELOG
 =========
 
+1.5.4-unreleased (2024-04-xx)
+-----------------------------
+
+- Ajout des Mailles officielles manquantes, utilisées par la nouvelle version du
+référentiel de sensibilité (2x2km, 20x20km, 50x50km)
+
+
 1.5.3 (2024-05-23)
 ------------------
 
 **🐛 Corrections**
 
  - Correction de l'intégration des paramètres de type `list` dans la route `/areas` (#26)
- 
 
-1.5.2 (2024-04-10)
+
+1.5.2 (2024-09-10)
+>>>>>>> 7d697bc (update CHANGELOG/VERSION)
 ------------------
 
 **🚀 Nouveautés**
 
- - Possibilité d'appeler la route `GET/areas` sans retourner les géométries (#22)
+- Possibilité d'appeler la route `GET/areas` sans retourner les géométries (#22)
 
 1.5.1 (2024-01-29)
 ------------------
