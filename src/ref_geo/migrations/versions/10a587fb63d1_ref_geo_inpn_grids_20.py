@@ -4,6 +4,7 @@ Revision ID: 10a587fb63d1
 Create Date: 2024-04-23 16:14:56.846732
 
 """
+
 from alembic import op
 
 from utils_flask_sqla.migrations.utils import logger, open_remote_file
@@ -16,7 +17,7 @@ from ref_geo.migrations.utils import (
 
 
 # revision identifiers, used by Alembic.
-revision = '10a587fb63d1'
+revision = "10a587fb63d1"
 down_revision = None
 branch_labels = ("ref_geo_inpn_grids_20",)
 depends_on = "6afe74833ed0"
