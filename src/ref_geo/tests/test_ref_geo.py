@@ -290,6 +290,17 @@ class TestRefGeo:
         assert response.status_code == 200
         assert all(area["id_type"] == area_commune.id_type for area in response.json)
 
+    def test_get_areas_type_codes(self):
+
+        type_codes = ["COM", "DEP"]
+
+        response = self.client.get(
+            url_for("ref_geo.get_areas"), query_string={"type_code": ",".join(type_codes)}
+        )
+
+        assert response.status_code == 200
+        assert all(area["id_type"] in type_codes for area in response.json)
+
     def test_get_areas_area_name(self):
         response = self.client.get(url_for("ref_geo.get_areas"), query_string={"area_name": CITY})
 
