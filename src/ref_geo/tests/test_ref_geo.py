@@ -46,6 +46,11 @@ def area_commune():
     return db.session.execute(select(BibAreasTypes).filter_by(type_code="COM")).scalar_one()
 
 
+@pytest.fixture(scope="function")
+def area_departement():
+    return db.session.execute(select(BibAreasTypes).filter_by(type_code="DEP")).scalar_one()
+
+
 @pytest.mark.usefixtures("client_class", "temporary_transaction")
 class TestRefGeo:
     expected_altitude = pytest.approx({"altitude_min": 984, "altitude_max": 2335}, rel=1e-2)
@@ -289,6 +294,20 @@ class TestRefGeo:
 
         assert response.status_code == 200
         assert all(area["id_type"] == area_commune.id_type for area in response.json)
+
+    def test_get_areas_type_codes(self, area_commune, area_departement):
+
+        type_codes = [area_commune.type_code, area_departement.type_code]
+
+        response = self.client.get(
+            url_for("ref_geo.get_areas"), query_string={"type_code": ",".join(type_codes)}
+        )
+
+        assert response.status_code == 200
+        assert all(
+            area["id_type"] in [area_commune.id_type, area_departement.id_type]
+            for area in response.json
+        )
 
     def test_get_areas_area_name(self):
         response = self.client.get(url_for("ref_geo.get_areas"), query_string={"area_name": CITY})

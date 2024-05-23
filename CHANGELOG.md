@@ -1,7 +1,15 @@
 CHANGELOG
 =========
 
-1.5.2 (2024-09-10)
+1.5.3 (2024-05-23)
+------------------
+
+**🐛 Corrections**
+
+ - Correction de l'intégration des paramètres de type `list` dans la route `/areas` (#26)
+ 
+
+1.5.2 (2024-04-10)
 ------------------
 
 **🚀 Nouveautés**

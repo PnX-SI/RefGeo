@@ -5,5 +5,5 @@ flask-marshmallow
 python-dotenv
 sqlalchemy>=1.4,<2
 utils-flask-sqlalchemy>=0.4.1
-utils-flask-sqlalchemy-geo>=0.3.1
+utils-flask-sqlalchemy-geo>=0.3.2
 psycopg2
