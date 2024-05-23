@@ -210,17 +210,19 @@ def get_areas():
         query = query.where(LAreas.enable == True)
 
     if "id_type" in params:
-        query = query.where(LAreas.id_type.in_(params.getlist("id_type")))
+        # getlist() of request.args does not use the syntax url?param=val1,val2
+        id_type = params.get("id_type").split(",")
+        query = query.where(LAreas.id_type.in_(id_type))
 
     if "type_code" in params:
-        query = query.where(
-            LAreas.area_type.has(BibAreasTypes.type_code.in_(params.getlist("type_code")))
-        )
+        # getlist() of request.args does not use the syntax url?param=val1,val2
+        type_code = params.get("type_code").split(",")
+        query = query.where(LAreas.area_type.has(BibAreasTypes.type_code.in_(type_code)))
 
     if "area_name" in params:
         query = query.where(LAreas.area_name.ilike("%{}%".format(params.get("area_name"))))
 
-    without_geom = params.get("without_geom", False, lambda x: x == "true")
+    without_geom = request.args.get("without_geom", False, lambda x: x == "true")
     if without_geom:
         query = query.options(defer("geom"))
         marsh_params["exclude"] = ["geom"]
