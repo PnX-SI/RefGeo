@@ -86,6 +86,7 @@ jobs:
           flask db upgrade ref_geo@head -x local-srid=2154
           flask db upgrade ref_geo_fr_municipalities@head
           flask db upgrade ref_geo_inpn_grids_5@head
+          flask db upgrade ref_geo_inpn_grids_20@head
       - name: Show database status
         run: |
           flask db status
