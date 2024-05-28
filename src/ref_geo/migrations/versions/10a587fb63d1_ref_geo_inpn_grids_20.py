@@ -1,4 +1,4 @@
-"""ref_geo_inpn_grids_20
+"""Insert INPN 20×20 grids in ref_geo
 
 Revision ID: 10a587fb63d1
 Create Date: 2024-04-23 16:14:56.846732

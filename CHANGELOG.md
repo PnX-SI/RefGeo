@@ -4,20 +4,20 @@ CHANGELOG
 1.5.4-unreleased (2024-04-xx)
 -----------------------------
 
-- Ajout des Mailles officielles manquantes, utilisées par la nouvelle version du
+- Ajout des nouvelles mailles officielles de l'INPN en métropole, utilisées par la nouvelle version du
 référentiel de sensibilité (2x2km, 20x20km, 50x50km)
 
-**Note de version**
+**⚠️ Notes de version**
 
-Pour ajouter les nouvelles mailles, éxécuter les commandes suivantes:
+Si vous n'utilisez pas GeoNature, pour ajouter les nouvelles mailles, exécuter les commandes suivantes :
 
 ```sh
 source venv/bin/activate
 export SQLALCHEMY_DATABASE_URI="postgresql://user:password@localhost:543database"
 cd src/ref_geo/migrations
-alembic upgrade ref_geo_inpn_grids_2@head  # Insertion du maillage 2x2km dl’hexagone fourni par l’INPN
-alembic upgrade ref_geo_inpn_grids_20@head  # Insertion du maillage 20x20kde l’hexagone fourni par l’INPN
-alembic upgrade ref_geo_inpn_grids_50@head  # Insertion du maillage 50x50kde l’hexagone fourni par l’INPN
+alembic upgrade ref_geo_inpn_grids_2@head  # Insertion des mailles 2x2km métropole, fournies par l’INPN
+alembic upgrade ref_geo_inpn_grids_20@head  # Insertion des mailles 20x20km métropole, fournies par l’INPN
+alembic upgrade ref_geo_inpn_grids_50@head  # Insertion des mailles 50x50km métropole, fournies par l’INPN
 ```
 
 1.5.3 (2024-05-23)
