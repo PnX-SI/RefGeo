@@ -3,6 +3,7 @@ import json
 
 from flask import url_for, current_app
 from flask_migrate import Migrate
+from ref_geo.commands import change_area_activation_status
 from werkzeug.exceptions import Unauthorized, BadRequest
 from jsonschema import validate as validate_json
 from alembic.migration import MigrationContext
@@ -10,7 +11,7 @@ from alembic.script import ScriptDirectory
 
 from ref_geo.env import db
 from ref_geo.models import BibAreasTypes, LAreas
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 
 polygon = {
@@ -29,6 +30,17 @@ polygon = {
 }
 
 CITY = "La Motte-en-Champsaur"
+PARAMETER_ENABLE = [
+    (dict(area_code=["50120"]), "50120"),
+    (dict(area_name=["Ain"]), "01"),
+    (dict(area_type=["COM"]), "01005"),
+    (
+        dict(
+            in_polygon="POLYGON ((-1.653442 49.628504, -1.588898 49.628504, -1.588898 49.653849, -1.653442 49.653849, -1.653442 49.628504))"
+        ),
+        "50129",
+    ),
+]
 
 
 def has_french_dem():
@@ -436,3 +448,27 @@ class TestRefGeo:
         )
         assert response.status_code == 200
         assert len(response.json) > 0
+
+    @pytest.mark.parametrize(
+        "parameters,expected_area_code",
+        PARAMETER_ENABLE,
+    )
+    def test_activate_areas(self, parameters, expected_area_code):
+        db.session.execute(
+            update(LAreas).where(LAreas.area_code == expected_area_code).values(enable=False)
+        )
+        change_area_activation_status(**parameters, enable=True)
+        q = select(LAreas.enable).where(LAreas.area_code == expected_area_code)
+        assert db.session.scalar(q) == True
+
+    @pytest.mark.parametrize(
+        "parameters,expected_area_code",
+        PARAMETER_ENABLE,
+    )
+    def test_deactivate_areas(self, parameters, expected_area_code):
+        db.session.execute(
+            update(LAreas).where(LAreas.area_code == expected_area_code).values(enable=True)
+        )
+        change_area_activation_status(**parameters, enable=False)
+        q = select(LAreas.enable).where(LAreas.area_code == expected_area_code)
+        assert db.session.scalar(q) == False

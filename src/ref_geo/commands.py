@@ -26,7 +26,9 @@ def info():
         click.echo("\t{}: {}".format(area_type.type_name, count))
 
 
-def change_area_activation_status(area_code, area_name, area_type, in_polygon, enable):
+def change_area_activation_status(
+    area_code=None, area_name=None, area_type=None, in_polygon=None, enable=True
+):
     """
     Change the activation status of areas in the geographical referential.
 
