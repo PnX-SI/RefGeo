@@ -1,20 +1,41 @@
 CHANGELOG
 =========
 
+1.5.4-unreleased (2024-04-xx)
+-----------------------------
+
+- Ajout des nouvelles mailles officielles de l'INPN en métropole (2x2km, 20x20km, 50x50km), utilisées par la nouvelle version du référentiel de sensibilité (#24, par @lpofredc)
+
+**⚠️ Notes de version**
+
+Si vous n'utilisez pas GeoNature, pour ajouter les nouvelles mailles, exécuter les commandes suivantes :
+
+```sh
+source venv/bin/activate
+export SQLALCHEMY_DATABASE_URI="postgresql://user:password@localhost:543database"
+cd src/ref_geo/migrations
+alembic upgrade ref_geo_inpn_grids_2@head  # Insertion des mailles 2x2km métropole, fournies par l’INPN
+alembic upgrade ref_geo_inpn_grids_20@head  # Insertion des mailles 20x20km métropole, fournies par l’INPN
+alembic upgrade ref_geo_inpn_grids_50@head  # Insertion des mailles 50x50km métropole, fournies par l’INPN
+```
+
+
 1.5.3 (2024-05-23)
 ------------------
 
 **🐛 Corrections**
 
- - Correction de l'intégration des paramètres de type `list` dans la route `/areas` (#26)
- 
+- Correction de l'intégration des paramètres de type `list` dans la route `/areas` (#26)
 
-1.5.2 (2024-04-10)
+
+1.5.2 (2024-09-10)
 ------------------
 
 **🚀 Nouveautés**
 
- - Possibilité d'appeler la route `GET/areas` sans retourner les géométries (#22)
+- Possibilité d'appeler la route `GET/areas` sans retourner les géométries (#22)
+
+
 
 1.5.1 (2024-01-29)
 ------------------
@@ -123,5 +144,6 @@ CHANGELOG
 Externalisation du référentiel géographique de GeoNature 2.9.2.
 
 **🚀 Nouveautés**
+
 
 * Le SRID local est déterminé automatiquement à partir du SRID de la colonne ``ref_geo.l_areas.geom``.
