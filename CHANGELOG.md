@@ -5,6 +5,11 @@ CHANGELOG
 -----------------------------
 
 - Ajout des nouvelles mailles officielles de l'INPN en métropole (2x2km, 20x20km, 50x50km), utilisées par la nouvelle version du référentiel de sensibilité (#24, par @lpofredc)
+- Ajout des commandes `flask ref_geo activate` et  `flask ref_geo deactivate` pour activer/desactiver des zonages dans le référentiel géographique:
+  - par type de zonage `flask ref_geo activate --area-type COM --area-type DEP`
+  - par nom de zonage `flask ref_geo activate --area-name Ain --area-name Hautes-Alpes`
+  - par code de zonage (voir `l_areas.area_code`): `flask ref_geo activate --area-code 01`
+  - par géométrie : `flask ref_geo activate --area-type in-polygon 'POLYGON ((-1.653442 49.628504, -1.588898 49.628504, -1.588898 49.653849, -1.653442 49.653849, -1.653442 49.628504))'`
 
 **⚠️ Notes de version**
 
@@ -34,6 +39,7 @@ alembic upgrade ref_geo_inpn_grids_50@head  # Insertion des mailles 50x50km mét
 **🚀 Nouveautés**
 
 - Possibilité d'appeler la route `GET/areas` sans retourner les géométries (#22)
+
 
 
 1.5.1 (2024-01-29)
