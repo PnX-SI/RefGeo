@@ -10,7 +10,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from utils_flask_sqla.serializers import serializable
 from utils_flask_sqla_geo.serializers import geoserializable
 
-from .env import db
+from ref_geo.env import db
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
