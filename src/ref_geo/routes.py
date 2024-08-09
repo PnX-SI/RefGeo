@@ -166,7 +166,9 @@ def get_municipalities():
     q = select(LiMunicipalities).order_by(LiMunicipalities.nom_com.asc())
 
     if "nom_com" in parameters:
-        q = q.where(LiMunicipalities.nom_com.ilike("{}%".format(parameters.get("nom_com"))))
+        search_name = request.args.get("nom_com")
+        search_name = search_name.replace(" ", "%") + "%"
+        q = q.where(func.unaccent(LiMunicipalities.nom_com).ilike(func.unaccent(search_name)))
     limit = int(parameters.get("limit")) if parameters.get("limit") else 100
 
     municipalities = db.session.scalars(q.limit(limit)).all()
@@ -220,7 +222,9 @@ def get_areas():
         query = query.where(LAreas.area_type.has(BibAreasTypes.type_code.in_(type_code)))
 
     if "area_name" in params:
-        query = query.where(LAreas.area_name.ilike("%{}%".format(params.get("area_name"))))
+        search_name = request.args.get("area_name")
+        search_name = search_name.replace(" ", "%") + "%"
+        query = query.where(func.unaccent(LAreas.area_name).ilike(func.unaccent(search_name)))
 
     without_geom = request.args.get("without_geom", False, lambda x: x == "true")
     if without_geom:
