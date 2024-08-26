@@ -227,7 +227,7 @@ def get_areas():
         query = query.options(defer("geom"))
         marsh_params["exclude"] = ["geom"]
 
-    limit = int(params.get("limit")[0]) if params.get("limit") else 100
+    limit = int(params.get("limit")) if params.get("limit") else 100
 
     fields = {"area_type.type_code"}
     if output_format == "geojson" and not without_geom:
