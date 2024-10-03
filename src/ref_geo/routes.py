@@ -192,7 +192,27 @@ def get_areas():
         .options(joinedload("area_type").load_only("type_code"))
         .order_by(LAreas.area_name.asc())
     )
-
+    # Detect geom in param
+    geom_param = request.args.get('geom')
+    if geom_param:
+        try:
+            # print("Received geometry parameter:", geom_param)
+            geom_shape = wkt.loads(geom_param)
+            # Detect the SRID of the input geometry
+            input_srid = 4326  # Default to 4326
+            if geom_shape.is_valid and hasattr(geom_shape, 'srid'):
+                input_srid = geom_shape.srid if geom_shape.srid else 4326
+            # print("Input geometry SRID:", input_srid)
+            geom_filter = from_shape(geom_shape, srid=input_srid)
+            # Transform geometry to match the database's SRID (2154) if needed
+            if input_srid != 2154:
+                geom_filter = func.ST_Transform(geom_filter, 2154)
+            query = query.where(LAreas.geom.ST_Intersects(geom_filter))
+            # print("Query after adding geometry filter:", query)
+        except Exception as e:
+            # print("Error processing geometry:", str(e))
+            return {"message": "Invalid geometry format.", "status": "error"}, 400
+            
     if "enable" in params:
         enable_param = params["enable"].lower()
         accepted_enable_values = ["true", "false", "all"]
