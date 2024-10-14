@@ -12,6 +12,12 @@ CHANGELOG
   - par géométrie : `flask ref_geo activate --area-type in-polygon 'POLYGON ((-1.653442 49.628504, -1.588898 49.628504, -1.588898 49.653849, -1.653442 49.653849, -1.653442 49.628504))'`
 - Amélioration de la "recherche par commune" : pouvoir saisir un nom de commune sans saisir les tirets séparateurs de mots ou les caractères accentués (#31 par @ch-cbna)
 
+**🐛 Corrections**
+
+- Correction d'une erreur sur le param `limit` de la route `/areas` (#33)
+- Correction de l'implémentation du paramètre `type_code` dans la route `/areas` (#26).
+- Modification d'un import (#30)
+
 **⚠️ Notes de version**
 
 Si vous n'utilisez pas GeoNature, pour ajouter les nouvelles mailles, exécuter les commandes suivantes :
@@ -35,7 +41,6 @@ alembic upgrade ref_geo_inpn_grids_50@head  # Insertion des mailles 50x50km mét
 1.5.2 (2024-09-10)
 ------------------
 
----
 
 **🚀 Nouveautés**
 
@@ -44,7 +49,6 @@ alembic upgrade ref_geo_inpn_grids_50@head  # Insertion des mailles 50x50km mét
 1.5.1 (2024-01-29)
 ------------------
 
----
 
 - Ajout de la hiérachisation des types de zonages géographiques, avec l'ajout du champs `ref_geo.bib_areas_types.size_hierarchy` (#11)
 - Remplacement du champs `l_areas.geojson_4326` par `l_areas.geom_4326` et création de triggers permettant de garder en cohérence les champs `geom` et `geom_4326` (#6)
