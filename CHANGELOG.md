@@ -14,9 +14,9 @@ CHANGELOG
 
 **🐛 Corrections**
 
-- Correction d'une erreur sur le param `limit` de la route `/areas` (#33)
-- Correction de l'implémentation du paramètre `type_code` dans la route `/areas` (#26).
-- Modification d'un import (#30)
+- Correction d'une erreur sur le paramètre `limit` de la route `/areas` (#33)
+- Correction de l'implémentation du paramètre `type_code` de la route `/areas` (#26).
+- Modification d'un import Python (#30)
 
 **⚠️ Notes de version**
 
