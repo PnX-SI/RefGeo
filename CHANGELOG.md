@@ -5,18 +5,17 @@ CHANGELOG
 -----------------------------
 
 - Ajout des nouvelles mailles officielles de l'INPN en métropole (2x2km, 20x20km, 50x50km), utilisées par la nouvelle version du référentiel de sensibilité (#24, par @lpofredc)
-- Ajout des commandes `flask ref_geo activate` et `flask ref_geo deactivate` pour activer/desactiver des zonages dans le référentiel géographique :
-  - par type de zonage `flask ref_geo activate --area-type COM --area-type DEP`
-  - par nom de zonage `flask ref_geo activate --area-name Ain --area-name Hautes-Alpes`
-  - par code de zonage (voir `l_areas.area_code`): `flask ref_geo activate --area-code 01`
+- Ajout des commandes `flask ref_geo activate` et `flask ref_geo deactivate` pour activer/desactiver des zonages dans le référentiel géographique (#29) :
+  - par type de zonage : `flask ref_geo activate --area-type COM --area-type DEP`
+  - par nom de zonage ; `flask ref_geo activate --area-name Ain --area-name Hautes-Alpes`
+  - par code de zonage (voir `l_areas.area_code`) : `flask ref_geo activate --area-code 01`
   - par géométrie : `flask ref_geo activate --area-type in-polygon 'POLYGON ((-1.653442 49.628504, -1.588898 49.628504, -1.588898 49.653849, -1.653442 49.653849, -1.653442 49.628504))'`
-- Amélioration de la "recherche par commune" : pouvoir saisir un nom de commune sans saisir les tirets séparateurs de mots ou les caractères accentués (#31 par @ch-cbna)
+- Amélioration de la route de recherche par commune : pouvoir saisir un nom de commune sans saisir les tirets séparateurs de mots ou les caractères accentués (#31, par @ch-cbna)
 
 **🐛 Corrections**
 
-- Correction d'une erreur sur le paramètre `limit` de la route `/areas` (#33)
-- Correction de l'implémentation du paramètre `type_code` de la route `/areas` (#26).
-- Modification d'un import Python (#30)
+- Correction d'une erreur sur le paramètre `limit` de la route `/areas` (#33, par @gildeluermoz)
+- Modification d'un import Python (#30, par @edelclaux)
 
 **⚠️ Notes de version**
 
@@ -41,14 +40,12 @@ alembic upgrade ref_geo_inpn_grids_50@head  # Insertion des mailles 50x50km mét
 1.5.2 (2024-09-10)
 ------------------
 
-
 **🚀 Nouveautés**
 
 - Possibilité d'appeler la route `GET/areas` sans retourner les géométries (#22)
 
 1.5.1 (2024-01-29)
 ------------------
-
 
 - Ajout de la hiérachisation des types de zonages géographiques, avec l'ajout du champs `ref_geo.bib_areas_types.size_hierarchy` (#11)
 - Remplacement du champs `l_areas.geojson_4326` par `l_areas.geom_4326` et création de triggers permettant de garder en cohérence les champs `geom` et `geom_4326` (#6)
