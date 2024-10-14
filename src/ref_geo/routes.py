@@ -167,7 +167,7 @@ def get_municipalities():
 
     if "nom_com" in parameters:
         search_name = request.args.get("nom_com")
-        search_name = search_name.replace(" ", "%") + "%"
+        search_name = "%" + search_name.replace(" ", "%") + "%"
         q = q.where(func.unaccent(LiMunicipalities.nom_com).ilike(func.unaccent(search_name)))
     limit = int(parameters.get("limit")) if parameters.get("limit") else 100
 
@@ -223,7 +223,7 @@ def get_areas():
 
     if "area_name" in params:
         search_name = request.args.get("area_name")
-        search_name = search_name.replace(" ", "%") + "%"
+        search_name = "%" + search_name.replace(" ", "%") + "%"
         query = query.where(func.unaccent(LAreas.area_name).ilike(func.unaccent(search_name)))
 
     without_geom = request.args.get("without_geom", False, lambda x: x == "true")
