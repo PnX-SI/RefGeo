@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-1.5.4-unreleased (2024-04-xx)
+1.5.4 (2024-10-23)
 -----------------------------
 
 - Ajout des nouvelles mailles officielles de l'INPN en métropole (2x2km, 20x20km, 50x50km), utilisées par la nouvelle version du référentiel de sensibilité (#24, par @lpofredc)
@@ -11,6 +11,7 @@ CHANGELOG
   - par code de zonage (voir `l_areas.area_code`) : `flask ref_geo activate --area-code 01`
   - par géométrie : `flask ref_geo activate --area-type in-polygon 'POLYGON ((-1.653442 49.628504, -1.588898 49.628504, -1.588898 49.653849, -1.653442 49.653849, -1.653442 49.628504))'`
 - Amélioration de la route de recherche par commune : pouvoir saisir un nom de commune sans saisir les tirets séparateurs de mots ou les caractères accentués (#31, par @ch-cbna)
+- Amélioration de la fonction de détermination de l'altitude à partir d'une géométrie `ref_geo.fct_get_altitude_intersection(geom)` (#9 par @jbrieuclp)
 
 **🐛 Corrections**
 
