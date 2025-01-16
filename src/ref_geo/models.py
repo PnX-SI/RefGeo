@@ -62,6 +62,7 @@ class LAreas(db.Model):
     enable = db.Column(db.Boolean, nullable=False, default=True)
     meta_create_date = db.Column(db.DateTime, default=datetime.now)
     meta_update_date = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    description = db.Column(db.UnicodeText)
     area_type = db.relationship("BibAreasTypes", lazy="select")
     parent_areas = db.relationship(
         "LAreas",

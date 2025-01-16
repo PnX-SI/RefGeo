@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.5.5 (XXXX-XX-XX)
+------------------
+
+- Ajout d'une colonne `description` dans la table `l_areas` (#35 par @juggler31)
+
 1.5.4 (2024-10-23)
 -----------------------------
 
