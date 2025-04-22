@@ -1,7 +1,9 @@
 import json
 import os
 from pathlib import Path
-from pkg_resources import iter_entry_points
+
+# after drop support of py3.9, replace with from importlib.metadata import entry_point
+from backports.entry_points_selectable import entry_points
 
 from flask import Flask, current_app, request
 from flask_migrate import Migrate
@@ -18,9 +20,8 @@ migrate = Migrate()
 def configure_alembic(alembic_config):
     alembic_config.set_main_option("sqlalchemy.url", current_app.config["SQLALCHEMY_DATABASE_URI"])
     version_locations = alembic_config.get_main_option("version_locations", default="").split()
-    for entry_point in iter_entry_points("alembic", "migrations"):
-        _, migrations = str(entry_point).split("=", 1)
-        version_locations += [migrations.strip()]
+    for entry_point in entry_points(group="alembic", name="migrations"):
+        version_locations += [entry_point.value]
     alembic_config.set_main_option("version_locations", " ".join(version_locations))
     return alembic_config
 

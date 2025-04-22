@@ -1,5 +1,5 @@
 import os
-from pkg_resources import iter_entry_points
+from backports.entry_points_selectable import entry_points
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -15,14 +15,14 @@ sqlalchemy_database_uri = os.environ.get("SQLALCHEMY_DATABASE_URI")
 if sqlalchemy_database_uri:
     config.set_main_option("sqlalchemy.url", sqlalchemy_database_uri)
 version_locations = set(config.get_main_option("version_locations", default="").split())
-for entry_point in iter_entry_points("alembic", "migrations"):
-    _, migrations = str(entry_point).split("=", 1)
-    version_locations.add(migrations.strip())
+for entry_point in entry_points(group="alembic", name="migrations"):
+    version_locations.add(entry_point.value)
 context.script.version_locations = list(version_locations)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-fileConfig(config.config_file_name)
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -36,7 +36,7 @@ target_metadata = None
 # ... etc.
 
 
-def run_migrations_offline():
+def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
     This configures the context with just a URL
@@ -60,7 +60,7 @@ def run_migrations_offline():
         context.run_migrations()
 
 
-def run_migrations_online():
+def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
 
     In this scenario we need to create an Engine
@@ -68,7 +68,7 @@ def run_migrations_online():
 
     """
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

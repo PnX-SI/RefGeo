@@ -7,3 +7,4 @@ sqlalchemy>=1.4,<2
 utils-flask-sqlalchemy>=0.4.2
 utils-flask-sqlalchemy-geo>=0.3.3
 psycopg2
+backports.entry-points-selectable  # could be removed we drop of py3.9 support
