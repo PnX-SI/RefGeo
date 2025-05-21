@@ -5,11 +5,11 @@
 **🚀 Nouveautés**
 
 - Ajout d'une colonne `description` dans la table `l_areas` (#35 par @juggler31)
-- Ajout de la compatibilité avec Debian 13 et Python 3.13(#38 par @bouttier)
+- Ajout de la compatibilité avec Debian 13 et Python 3.13 (#38 par @bouttier)
 
 **🐛 Corrections**
 
-- Ajout des valeurs manquantes dans `size_hierarchy` pour les mailles 2, 20 et 50.(#39 par @jacquesfize)
+- Ajout des valeurs manquantes dans `size_hierarchy` pour les mailles 2, 20 et 50 (#39 par @jacquesfize)
 
 ## 1.5.4 (2024-10-23)
 
