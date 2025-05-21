@@ -5,6 +5,7 @@
 **🚀 Nouveautés**
 
 - Ajout d'une colonne `description` dans la table `l_areas` (#35 par @juggler31)
+- Ajout de la compatibilité avec Debian 13 et Python 3.13(#38 par @bouttier)
 
 **🐛 Corrections**
 
