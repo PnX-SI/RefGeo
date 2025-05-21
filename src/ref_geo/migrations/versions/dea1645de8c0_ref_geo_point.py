@@ -1,4 +1,4 @@
-""" Référentiel point, cor (area, linear, point)
+"""Référentiel point, cor (area, linear, point)
 
 Revision ID: dea1645de8c0
 Revises: f7374cd6e38d
