@@ -1,6 +1,6 @@
 """
-    methodes pour ref_geo
-        - recupération du srid local
+methodes pour ref_geo
+    - recupération du srid local
 """
 
 from sqlalchemy import text

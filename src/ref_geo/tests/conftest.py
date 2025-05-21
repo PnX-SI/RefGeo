@@ -1,5 +1,5 @@
 import pytest
-
+from flask import request
 from utils_flask_sqla.tests.utils import JSONClient
 
 from ref_geo import create_app
@@ -7,13 +7,24 @@ from ref_geo.env import db
 
 
 @pytest.fixture(scope="session")
-def app():
+def _app():
     app = create_app()
     app.testing = True
     app.test_client_class = JSONClient
-    return app
+
+    @app.before_request
+    def get_endpoint():
+        pytest.endpoint = request.endpoint
+
+    with app.app_context():
+        yield app
 
 
 @pytest.fixture(scope="session")
-def _session(app):
+def _session(_app):
     return db.session
+
+
+@pytest.fixture(scope="session", autouse=True)
+def app(_app, _session):
+    return _app
