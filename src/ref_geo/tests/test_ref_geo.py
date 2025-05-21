@@ -53,12 +53,12 @@ def has_french_dem():
     return "1715cf31a75d" in current_heads  # ign bd alti
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="class")
 def area_commune():
     return db.session.execute(select(BibAreasTypes).filter_by(type_code="COM")).scalar_one()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="class")
 def area_departement():
     return db.session.execute(select(BibAreasTypes).filter_by(type_code="DEP")).scalar_one()
 
