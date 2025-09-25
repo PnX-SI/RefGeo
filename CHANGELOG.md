@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 1.5.6 (2025-09-25)
+
+**🐛 Corrections**
+
+- Correction du build du package Python à l'origine de l'échec des tests sur GeoNature (par @jacquesfize)
+
+
 ## 1.5.5 (2025-05-21)
 
 **🚀 Nouveautés**
