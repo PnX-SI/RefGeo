@@ -27,11 +27,9 @@ def upgrade():
 
 
 def downgrade():
-    op.execute(
-        """
+    op.execute("""
         DROP TABLE ref_geo.cor_linear_group;
         DROP TABLE ref_geo.t_linear_groups;
         DROP TABLE ref_geo.l_linears;
         DROP TABLE ref_geo.bib_linears_types;
-    """
-    )
+    """)

@@ -10,7 +10,6 @@ from alembic import op
 import sqlalchemy as sa
 from geoalchemy2 import Geometry
 
-
 # revision identifiers, used by Alembic.
 revision = "bc2fcc772b46"
 down_revision = "795f6ea8ec45"
@@ -31,8 +30,7 @@ def upgrade():
         table_name="l_areas",
         column=sa.Column("geom_4326", Geometry("MULTIPOLYGON", 4326)),
     )
-    op.execute(
-        """
+    op.execute("""
         CREATE FUNCTION ref_geo.fct_tri_transform_geom()
           RETURNS trigger AS
           $BODY$
@@ -85,21 +83,17 @@ def upgrade():
           $BODY$
           LANGUAGE plpgsql VOLATILE
           COST 100;
-        """
-    )
+        """)
     # Set geom_4326 before creating trigger!
-    op.execute(
-        """
+    op.execute("""
         UPDATE
             ref_geo.l_areas
         SET
             geom_4326 = ST_Transform(geom, 4326)
         WHERE
             geom IS NOT NULL;
-        """
-    )
-    op.execute(
-        """
+        """)
+    op.execute("""
         CREATE TRIGGER tri_transform_geom_insert
             BEFORE
                 INSERT ON ref_geo.l_areas
@@ -114,8 +108,7 @@ def upgrade():
                 ROW
             EXECUTE FUNCTION
                 ref_geo.fct_tri_transform_geom();
-        """
-    )
+        """)
 
 
 def downgrade():
@@ -124,14 +117,12 @@ def downgrade():
         table_name="l_areas",
         column=sa.Column("geojson_4326", sa.String),
     )
-    op.execute(
-        """
+    op.execute("""
        UPDATE
            ref_geo.l_areas
        SET
            geojson_4326 = ST_AsGeoJson(geom_4326)
-       """
-    )
+       """)
     op.execute("DROP TRIGGER tri_transform_geom_insert ON ref_geo.l_areas")
     op.execute("DROP TRIGGER tri_transform_geom_update ON ref_geo.l_areas")
     op.execute("DROP FUNCTION ref_geo.fct_tri_transform_geom()")
@@ -140,8 +131,7 @@ def downgrade():
         table_name="l_areas",
         column_name="geom_4326",
     )
-    op.execute(
-        """
+    op.execute("""
        CREATE OR REPLACE FUNCTION ref_geo.fct_tri_calculate_geojson()
           RETURNS trigger AS
          $BODY$
@@ -152,13 +142,10 @@ def downgrade():
          $BODY$
          LANGUAGE plpgsql VOLATILE
          COST 100;
-       """
-    )
-    op.execute(
-        """
+       """)
+    op.execute("""
        CREATE TRIGGER tri_calculate_geojson
            BEFORE INSERT OR UPDATE OF geom ON ref_geo.l_areas
            FOR EACH ROW
            EXECUTE PROCEDURE ref_geo.fct_tri_calculate_geojson();
-       """
-    )
+       """)

@@ -9,7 +9,6 @@ Create Date: 2022-05-02 10:45:54.662631
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision = "cb038e76d59c"
 down_revision = "681306b27407"
@@ -18,8 +17,7 @@ depends_on = None
 
 
 def upgrade():
-    op.execute(
-        """
+    op.execute("""
     CREATE OR REPLACE FUNCTION ref_geo.fct_trg_calculate_geom_local()
       RETURNS trigger AS
     -- trigger qui reprojete une geom a partir d'une geom source fournie et l'insert dans le NEW
@@ -48,10 +46,8 @@ def upgrade():
     $BODY$
       LANGUAGE plpgsql VOLATILE
       COST 100;
-    """
-    )
-    op.execute(
-        """
+    """)
+    op.execute("""
     CREATE OR REPLACE FUNCTION ref_geo.fct_get_altitude_intersection(IN mygeom public.geometry)
       RETURNS TABLE(altitude_min integer, altitude_max integer) AS
     $BODY$
@@ -91,10 +87,8 @@ def upgrade():
       LANGUAGE plpgsql VOLATILE
       COST 100
       ROWS 1000;
-    """
-    )
-    op.execute(
-        """
+    """)
+    op.execute("""
     CREATE OR REPLACE FUNCTION ref_geo.fct_get_area_intersection(
       IN mygeom public.geometry,
       IN myidtype integer DEFAULT NULL::integer)
@@ -118,8 +112,7 @@ def upgrade():
     LANGUAGE plpgsql VOLATILE
     COST 100
     ROWS 1000;
-    """
-    )
+    """)
 
 
 def downgrade():

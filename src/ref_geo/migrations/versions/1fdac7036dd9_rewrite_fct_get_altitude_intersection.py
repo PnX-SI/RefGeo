@@ -9,7 +9,6 @@ Create Date: 2023-04-20 11:45:44.896318
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision = "1fdac7036dd9"
 down_revision = "f22d70b8fcfa"
@@ -18,8 +17,7 @@ depends_on = None
 
 
 def upgrade():
-    op.execute(
-        """
+    op.execute("""
         CREATE OR REPLACE FUNCTION ref_geo.fct_get_altitude_intersection(
             mygeom geometry
         )
@@ -75,13 +73,11 @@ def upgrade():
             END;
 
         $BODY$;
-        """
-    )
+        """)
 
 
 def downgrade():
-    op.execute(
-        """
+    op.execute("""
         CREATE OR REPLACE FUNCTION ref_geo.fct_get_altitude_intersection(
             mygeom geometry
         )
@@ -131,5 +127,4 @@ def downgrade():
             END;
 
         $BODY$;
-        """
-    )
+        """)

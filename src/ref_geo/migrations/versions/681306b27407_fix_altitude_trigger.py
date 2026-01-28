@@ -9,7 +9,6 @@ Create Date: 2021-11-30 14:48:23.458154
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision = "681306b27407"
 down_revision = "4882d6141a41"
@@ -18,8 +17,7 @@ depends_on = None
 
 
 def upgrade():
-    op.execute(
-        """
+    op.execute("""
         CREATE OR REPLACE FUNCTION ref_geo.fct_trg_calculate_alt_minmax()
         RETURNS trigger
         LANGUAGE plpgsql
@@ -52,13 +50,11 @@ def upgrade():
         END;
         $function$
         ;
-        """
-    )
+        """)
 
 
 def downgrade():
-    op.execute(
-        """
+    op.execute("""
         CREATE OR REPLACE FUNCTION ref_geo.fct_trg_calculate_alt_minmax()
         RETURNS trigger
         LANGUAGE plpgsql
@@ -89,5 +85,4 @@ def downgrade():
         END;
         $function$
         ;
-        """
-    )
+        """)

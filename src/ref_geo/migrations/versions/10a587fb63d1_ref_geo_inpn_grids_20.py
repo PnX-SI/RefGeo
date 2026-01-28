@@ -15,7 +15,6 @@ from ref_geo.migrations.utils import (
     insert_grids_and_drop_temporary_table,
 )
 
-
 # revision identifiers, used by Alembic.
 revision = "10a587fb63d1"
 down_revision = None
@@ -30,8 +29,7 @@ area_type = f"M{grid}"
 
 
 def upgrade():
-    op.execute(
-        f"""
+    op.execute(f"""
 INSERT INTO {schema}.bib_areas_types (type_name,
                                      type_code,
                                      type_desc,
@@ -40,8 +38,7 @@ INSERT INTO {schema}.bib_areas_types (type_name,
                                      num_version)
 VALUES ('Mailles {grid}*{grid}', 'M{grid}', 'Type maille INPN {grid}*{grid}km', NULL, NULL, NULL)
 ON CONFLICT (type_code) DO NOTHING;
-    """
-    )
+    """)
     create_temporary_grids_table(schema, temp_table_name)
     cursor = op.get_bind().connection.cursor()
     with open_remote_file(base_url, filename) as geofile:

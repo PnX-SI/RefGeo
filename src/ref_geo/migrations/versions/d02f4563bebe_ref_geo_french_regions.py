@@ -16,7 +16,6 @@ from ref_geo.migrations.utils import (
 )
 from utils_flask_sqla.migrations.utils import logger, open_remote_file
 
-
 # revision identifiers, used by Alembic.
 revision = "d02f4563bebe"
 down_revision = None
@@ -31,8 +30,7 @@ temp_table_name = "temp_fr_regions"
 
 def upgrade():
     logger.info("Create temporary regions table…")
-    op.execute(
-        f"""
+    op.execute(f"""
         CREATE TABLE {schema}.{temp_table_name} (
             gid integer NOT NULL,
             id character varying(24),
@@ -41,22 +39,18 @@ def upgrade():
             insee_reg character varying(5),
             geom public.geometry(MultiPolygon,2154)
         )
-    """
-    )
-    op.execute(
-        f"""
+    """)
+    op.execute(f"""
         ALTER TABLE ONLY {schema}.{temp_table_name}
             ADD CONSTRAINT {temp_table_name}_pkey PRIMARY KEY (gid)
-    """
-    )
+    """)
     cursor = op.get_bind().connection.cursor()
     with open_remote_file(base_url, filename) as geofile:
         logger.info("Inserting regions data in temporary table…")
         cursor.copy_expert(f"COPY {schema}.{temp_table_name} FROM STDIN", geofile)
     logger.info("Copy regions in l_areas…")
     if geom_4326_exists():
-        op.execute(
-            f"""
+        op.execute(f"""
             INSERT INTO {schema}.l_areas (
                 id_type,
                 area_code,
@@ -71,11 +65,9 @@ def upgrade():
                 ST_Transform(geom, Find_SRID('{schema}', 'l_areas', 'geom')),
                 ST_SetSRID(ST_Transform(geom, 4326), 4326)
             FROM {schema}.{temp_table_name}
-        """
-        )
+        """)
     else:
-        op.execute(
-            f"""
+        op.execute(f"""
             INSERT INTO {schema}.l_areas (
                 id_type,
                 area_code,
@@ -90,8 +82,7 @@ def upgrade():
                 ST_Transform(geom, Find_SRID('{schema}', 'l_areas', 'geom')),
                 ST_Transform(geom, 4326)
             FROM {schema}.{temp_table_name}
-        """
-        )
+        """)
     logger.info("Re-indexing…")
     op.execute(f"REINDEX INDEX {schema}.index_l_areas_geom")
     logger.info("Dropping temporary regions table…")

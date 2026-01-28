@@ -12,7 +12,6 @@ from werkzeug.exceptions import HTTPException
 from ref_geo.env import db
 from ref_geo.routes import routes
 
-
 migrate = Migrate()
 
 

@@ -13,7 +13,6 @@ from ref_geo.env import db
 from ref_geo.models import BibAreasTypes, LiMunicipalities, LAreas
 from ref_geo.schemas import AreaTypeSchema, MunicipalitySchema, AreaSchema
 
-
 routes = Blueprint("ref_geo", __name__)
 
 

@@ -13,7 +13,6 @@ from ref_geo.env import db
 from ref_geo.models import BibAreasTypes, LAreas
 from sqlalchemy import select, update
 
-
 polygon = {
     "type": "Polygon",
     "coordinates": [

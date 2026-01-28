@@ -12,7 +12,6 @@ import importlib
 from alembic import op
 from sqlalchemy.sql import text
 
-
 # revision identifiers, used by Alembic.
 revision = "795f6ea8ec45"
 down_revision = "dea1645de8c0"
@@ -26,11 +25,9 @@ def upgrade():
 
 
 def downgrade():
-    op.get_bind().execute(
-        """
+    op.get_bind().execute("""
         DROP TABLE ref_geo.cor_linear_area;
         DROP TABLE ref_geo.cor_areas;
-    """
-    )
+    """)
 
     pass
