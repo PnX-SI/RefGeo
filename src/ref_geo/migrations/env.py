@@ -1,5 +1,5 @@
 import os
-from backports.entry_points_selectable import entry_points
+from importlib.metadata import entry_points
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config

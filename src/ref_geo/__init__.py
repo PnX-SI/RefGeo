@@ -2,8 +2,7 @@ import json
 import os
 from pathlib import Path
 
-# after drop support of py3.9, replace with from importlib.metadata import entry_point
-from backports.entry_points_selectable import entry_points
+from importlib.metadata import entry_points
 
 from flask import Flask, current_app, request
 from flask_migrate import Migrate
