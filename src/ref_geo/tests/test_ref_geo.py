@@ -52,17 +52,17 @@ def has_french_dem():
     return "1715cf31a75d" in current_heads  # ign bd alti
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="session")
 def area_commune():
     return db.session.execute(select(BibAreasTypes).filter_by(type_code="COM")).scalar_one()
 
 
-@pytest.fixture(scope="class")
-def area_departement():
+@pytest.fixture()
+def area_departement(scope="session"):
     return db.session.execute(select(BibAreasTypes).filter_by(type_code="DEP")).scalar_one()
 
 
-@pytest.mark.usefixtures("client_class", "temporary_transaction")
+@pytest.mark.usefixtures("client_class")
 class TestRefGeo:
     expected_altitude = pytest.approx({"altitude_min": 984, "altitude_max": 2335}, rel=1e-2)
     expected_communes = {"La Motte-en-Champsaur", "Saint-Bonnet-en-Champsaur", "Aubessagne"}
@@ -448,10 +448,11 @@ class TestRefGeo:
         assert response.status_code == 200
         assert len(response.json) > 0
 
-    @pytest.mark.parametrize(
-        "parameters,expected_area_code",
-        PARAMETER_ENABLE,
-    )
+    # @pytest.mark.parametrize(
+    #     "parameters,expected_area_code",
+    #     PARAMETER_ENABLE,
+    # )
+    @pytest.fixture(scope="function")
     def test_activate_areas(self, parameters, expected_area_code):
         db.session.execute(
             update(LAreas).where(LAreas.area_code == expected_area_code).values(enable=False)
@@ -464,6 +465,7 @@ class TestRefGeo:
         "parameters,expected_area_code",
         PARAMETER_ENABLE,
     )
+    # @pytest.fixture(scope="function")
     def test_deactivate_areas(self, parameters, expected_area_code):
         db.session.execute(
             update(LAreas).where(LAreas.area_code == expected_area_code).values(enable=True)

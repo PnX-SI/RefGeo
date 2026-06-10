@@ -1,9 +1,14 @@
+import os
 import pytest
 from flask import request
 from utils_flask_sqla.tests.utils import JSONClient
 
-from ref_geo import create_app
+from utils_flask_sqla.tests.utils import TestSession
 from ref_geo.env import db
+
+db.session = db._make_scoped_session({"class_": TestSession})
+
+from ref_geo import create_app
 
 
 @pytest.fixture(scope="session")
