@@ -16,7 +16,7 @@ from ref_geo.schemas import AreaTypeSchema, MunicipalitySchema, AreaSchema
 routes = Blueprint("ref_geo", __name__)
 
 
-altitude_stmt = sa.select(sa.column("altitude_min"), sa.column("altitude_max")).select_from(
+altitude_stmt = sa.select(sa.text("altitude_min"), sa.text("altitude_max")).select_from(
     func.ref_geo.fct_get_altitude_intersection(
         func.ST_SetSRID(
             func.ST_GeomFromGeoJSON(sa.bindparam("geojson")),
@@ -70,8 +70,7 @@ def getGeoInfo():
         except ValueError:
             raise BadRequest("Parameter 'id_type' must be an integer")
         areas = areas.filter_by(id_type=id_type)
-
-    altitude = dict(db.session.execute(altitude_stmt, params={"geojson": geojson}).fetchone())
+    altitude = dict(db.session.execute(altitude_stmt.params(geojson=geojson)).one()._asdict())
 
     return jsonify(
         {
@@ -190,7 +189,7 @@ def get_areas():
     marsh_params = dict(as_geojson=(output_format == "geojson"))
     query = (
         select(LAreas)
-        .options(joinedload("area_type").load_only("type_code"))
+        .options(joinedload(LAreas.area_type).load_only(BibAreasTypes.type_code))
         .order_by(LAreas.area_name.asc())
     )
 
@@ -227,7 +226,7 @@ def get_areas():
 
     without_geom = request.args.get("without_geom", False, lambda x: x == "true")
     if without_geom:
-        query = query.options(defer("geom"))
+        query = query.options(defer(LAreas.geom))
         marsh_params["exclude"] = ["geom"]
 
     limit = int(params.get("limit")) if params.get("limit") else 100
@@ -235,7 +234,7 @@ def get_areas():
     fields = {"area_type.type_code"}
     if output_format == "geojson" and not without_geom:
         fields |= {"+geom_4326"}
-        query = query.options(undefer("geom_4326"))
+        query = query.options(undefer(LAreas.geom_4326))
 
     areas = db.session.scalars(query.limit(limit)).unique().all()
 

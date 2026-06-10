@@ -18,7 +18,8 @@ depends_on = None
 
 def upgrade():
     conn = op.get_bind()
-    metadata = sa.MetaData(bind=conn)
+    metadata = sa.MetaData()
+    metadata.reflect(conn)
     area_type = sa.Table("bib_areas_types", metadata, schema="ref_geo", autoload_with=conn)
     conn.execute(
         area_type.insert().values(
