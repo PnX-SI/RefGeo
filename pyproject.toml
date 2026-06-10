@@ -37,10 +37,6 @@ dependencies = [
 
 [project.optional-dependencies]
 tests = ["pytest", "pytest-flask", "pytest-cov", "jsonschema"]
-dev = [
-    "utils-flask-sqlalchemy @ file:dependencies/Utils-Flask-SQLAlchemy",
-    "utils-flask-sqlalchemy-geo @ file:dependencies/Utils-Flask-SQLAlchemy-Geo",
-]
 
 [project.urls]
 Homepage = "https://github.com/PnX-SI/RefGeo"
