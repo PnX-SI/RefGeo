@@ -1,13 +1,26 @@
+import os
+import pprint
+from contextlib import ExitStack
+from zlib import adler32
+import pathlib
+from tempfile import TemporaryDirectory
 from types import SimpleNamespace
+
+import fiona
 import click
 from flask.cli import with_appcontext
 from sqlalchemy import func, select
 import sqlalchemy as sa
+from owslib.feature.wfs200 import WebFeatureService_2_0_0
+from owslib.wfs import WebFeatureService
+from shapely.geometry import shape
+from geoalchemy2.shape import from_shape
 
 from ref_geo.env import db
 from ref_geo.models import BibAreasTypes, LAreas
 from ref_geo.utils import (
     create_temporary_grids_table,
+    get_local_srid,
     insert_areas_from_temporary_table,
     insert_grids_from_temporary_table,
 )
@@ -397,3 +410,306 @@ def fr_epci(version, enable, base_url):
     db.session.execute(f"DROP TABLE {schema}.{temp_table_name}")
     click.echo("Committing…")
     db.session.commit()
+
+
+@ref_geo_import.command()
+@click.option("--url", default="https://data.geopf.fr/wfs/", help="The URL of the WFS API.")
+@click.option(
+    "--layer",
+    "layer_id",
+    help="Request the following layer from the WFS API. List available layers if not specified.",
+)
+@click.option(
+    "--srid",
+    type=int,
+    help="Request the following SRID from the WFS API. List supported SRID by the server if not specified.",
+)
+@click.option(
+    "--data-dir",
+    type=click.Path(
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        path_type=pathlib.Path,
+    ),
+    help="Save the SHAPE-ZIP file to this directory. Re-use existing file from this directory if any.",
+)
+@click.option("--type-code", required=True)
+@click.option("--type-name")
+@click.option("--type-desc")
+@click.option("--type-size-hierarchy", type=int)
+@click.option(
+    "--map",
+    "mappings",
+    type=str,
+    multiple=True,
+    help="Mapping propriété -> champ LAreas, ex: --map area_name=nom --map area_code=id",
+)
+@click.option(
+    "--additional-data",
+    "additional_data_fields",
+    type=str,
+    default="",
+    help="Colonnes sources à stocker dans additional_data (JSONB), séparées par des virgules, ex: --additional-data surface,population",
+)
+@click.option(
+    "--dry-run", is_flag=True, default=False, help="Afficher les données sans les importer."
+)
+@click.option(
+    "--verbose", is_flag=True, default=False, help="Afficher chaque feature qui va être importée."
+)
+@click.option(
+    "--non-interactive",
+    is_flag=True,
+    default=False,
+    help="Désactiver les confirmations interactives.",
+)
+@with_appcontext
+def wfs(
+    url,
+    layer_id,
+    srid,
+    type_code,
+    type_name,
+    type_desc,
+    type_size_hierarchy,
+    data_dir: pathlib.Path,
+    mappings=(),
+    additional_data_fields="",
+    dry_run=False,
+    verbose=False,
+    non_interactive=False,
+):
+    # Fetching (or creating) the area type
+    area_type = db.session.execute(
+        select(BibAreasTypes).where(BibAreasTypes.type_code == type_code)
+    ).scalar_one_or_none()
+    if area_type is None:  # Création du type de zonage
+        click.confirm("Le type de zonage n’existe pas, le créer ?", abort=True)
+        while not type_name:
+            type_name = click.prompt("Nom du type (requis) ")
+        if not type_desc:
+            type_desc = click.prompt("Description (optionel) ")
+        if not type_size_hierarchy:
+            type_size_hierarchy = int(click.prompt("Taille moyenne du rayon en km (optionel) "))
+        with db.session.begin_nested():
+            area_type = BibAreasTypes(
+                type_code=type_code, type_name=type_name, type_desc=type_desc
+            )
+            db.session.add(area_type)
+    else:  # Utilisation d’un type existant, vérification de la cohérence
+        if (
+            type_name
+            and area_type.type_name != type_name
+            and click.confirm(
+                f"Le type de zonage existe mais utilise un autre nom ({area_type.type_name}), le mettre à jour ?"
+            )
+        ):
+            area_type.type_name = type_name
+        if (
+            type_desc
+            and area_type.type_desc != type_desc
+            and click.confirm(
+                f"Le type de zonage existe mais utilise une autre description ({area_type.type_desc}), la mettre à jour ?"
+            )
+        ):
+            area_type.type_desc = type_name
+        # TODO: mettre à jour ref_name / ref_version / num_version
+        existing_count = db.session.execute(
+            select(sa.func.count()).select_from(LAreas).where(LAreas.id_type == area_type.id_type)
+        ).scalar()
+        if existing_count:
+            if non_interactive:
+                raise click.ClickException(
+                    f"Il y a déjà {existing_count} zonage(s) pour ce type ({type_code})."
+                )
+            click.confirm(
+                f"Il y a déjà {existing_count} zonage(s) pour ce type ({type_code}). Continuer l’import ?",
+                abort=True,
+            )
+
+    # Fetching the SHAPE-ZIP from the WFS API
+    with ExitStack() as stack:
+        if not data_dir and "DATA_DIRECTORY" in os.environ:
+            data_dir = pathlib.Path(os.environ.get("DATA_DIRECTORY"))
+        if not data_dir:
+            data_dir = pathlib.Path(stack.enter_context(TemporaryDirectory()))
+        data_dir.mkdir(exist_ok=True)
+        # Be sure to reuse a file only if downloaded with same parameters.
+        hash = "{:08x}".format(adler32(f"{url}-{layer_id}-{srid}".encode()))
+        file_path = data_dir / f"{layer_id}-{hash}.shp.zip"
+        if not file_path.is_file():
+            wfs = WebFeatureService_2_0_0(url, version="2.0.0")
+            click.echo("Service WFS :")
+            click.echo(f"\tTitre : {wfs.identification.title}")
+            if wfs.version != "2.0.0":
+                raise click.ClickException(f"Version 2.0.0 attendue, obtenue : {wfs.version}")
+            if (getfeature := wfs.getOperationByName("GetFeature")) is None:
+                raise click.ClickException("Opération GetFeature non supportée.")
+            if "SHAPE-ZIP" not in getfeature.parameters["outputFormat"]["values"]:
+                raise click.ClickException("Format SHAPE-ZIP non supportée.")
+            if not layer_id:
+                click.echo("Voici la liste des couches disponibles :")
+                fmt = "{:80s} | {:s}"
+                click.echo(fmt.format("Titre", "Code"))
+                for key, value in wfs.contents.items():
+                    click.echo(fmt.format(value.title, key))
+                layer_id = click.prompt("Choix de la couche")
+            try:
+                layer = wfs.contents[layer_id]
+            except KeyError:
+                raise click.ClickException(
+                    f"La couche '{layer_id}' n’a pas été trouvé dans le flux."
+                )
+            click.echo("Couche :")
+            click.echo(f"\tID : {layer.id}")
+            click.echo(f"\tTitre : {layer.title}")
+            click.echo(f"\tDescription : {layer.abstract}")
+            schema = wfs.get_schema(layer.id)
+            click.echo("\tSchéma :")
+            for prop, proptype in schema["properties"].items():
+                click.echo(f"\t\t{prop:16s} ({proptype})")
+            if not srid:
+                click.echo("\tSRS :")
+                for srs in layer.crsOptions:
+                    click.echo(f"\t\t{srs}")
+                srid = click.prompt("Choix du SRID", type=int)
+            srs = f"urn:ogc:def:crs:EPSG::{srid}"
+            if srs not in layer.crsOptions:
+                click.ClickException(f"Le SRS spécifié n’est pas supporté par le serveur")
+            click.echo(f"\tSRS : {srs}")
+            click.echo(f"Téléchargement de la couche dans {file_path}")
+            response = wfs.getfeature(typename=[layer_id], outputFormat="SHAPE-ZIP", srsname=srs)
+            with open(file_path, "wb") as f:
+                f.write(response.read())
+        else:
+            click.echo(f"Réutilisation du fichier existant {file_path}")
+        shp = stack.enter_context(fiona.open(file_path))
+
+        click.echo("Propriétés du shapefile :")
+        for prop, proptype in shp.schema["properties"].items():
+            click.echo(f"\t\t{prop:16s} ({proptype})")
+
+        field_mapping = {}
+        for m in mappings:
+            dest, _, source = m.partition("=")
+            dest, source = dest.strip(), source.strip()
+            if not dest or not source:
+                raise click.ClickException(
+                    f"Correspondance invalide : {m}. Format attendue : destination=source"
+                )
+            if source not in shp.schema["properties"]:
+                raise click.ClickException(
+                    f"Le champs source {source} n'est pas présent dans le shapefile."
+                )
+            if dest not in LAreas.__table__.columns:
+                raise click.ClickException(
+                    f"La destination {dest} n'est pas une colonne de LAreas."
+                )
+            field_mapping[dest] = source
+
+        additional_data_fields = [
+            f.strip() for f in additional_data_fields.split(",") if f.strip()
+        ]
+        for field in additional_data_fields:
+            if field not in shp.schema["properties"]:
+                raise click.ClickException(
+                    f"Le champ supplémentaire {field} n'est pas présent dans le shapefile."
+                )
+
+        click.echo("Correspondance de champs :")
+        for k, v in field_mapping.items():
+            click.echo(f"\t{k:16s} <- {v:s}")
+        click.echo("Champs additionnels :")
+        for field in additional_data_fields:
+            click.echo(f"\t{field}")
+
+        warn_fields = {"area_name", "area_code", "description"}
+        missing = warn_fields - set(field_mapping.keys())
+        if missing and not non_interactive:
+            click.confirm(
+                f"Ces champs n'ont pas de correspondance : {', '.join(sorted(missing))}. "
+                "Continuer l'import ?",
+                abort=True,
+            )
+
+        if verbose:
+            for feature in shp:
+                click.echo(pprint.pformat(dict(feature["properties"])))
+
+        if not non_interactive:
+            click.confirm(f"{len(shp)} zonages vont être importés, continuer ?", abort=True)
+        local_srid = get_local_srid(db.session)
+        for feature in shp:
+            properties = feature["properties"]
+            area_kwargs = {
+                dest: feature["properties"][source]
+                for dest, source in field_mapping.items()
+                if source in properties
+            }
+            additional_data = {
+                field: feature["properties"][field]
+                for field in additional_data_fields
+                if field in properties
+            }
+            area = LAreas(
+                id_type=area_type.id_type,
+                additional_data=additional_data or None,
+                **area_kwargs,
+            )
+            geom_wkb = from_shape(shape(feature["geometry"]), srid=shp.crs.to_epsg())
+            if srid == 4326:
+                area.geom_4326 = geom_wkb
+                # geom computed through trigger
+            elif srid == local_srid:
+                area.geom = geom_wkb
+                # geom_4326 computed through trigger
+            else:
+                area.geom = func.ST_Transform(geom_wkb, local_srid)
+                area.geom_4326 = func.ST_Transform(geom_wkb, 4326)
+            db.session.add(area)
+            if verbose:
+                click.echo(area.as_dict())
+
+    if not dry_run:
+        db.session.commit()
+
+
+@ref_geo_import.command()
+@click.option(
+    "--data-dir",
+    type=click.Path(
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        path_type=pathlib.Path,
+    ),
+    help="Save the SHAPE-ZIP file to this directory. Re-use existing file from this directory if any.",
+)
+@click.option(
+    "--dry-run", is_flag=True, default=False, help="Afficher les données sans les importer."
+)
+@click.option(
+    "--verbose", is_flag=True, default=False, help="Afficher chaque feature qui va être importée."
+)
+@click.option(
+    "--non-interactive",
+    is_flag=True,
+    default=False,
+    help="Désactiver les confirmations interactives.",
+)
+@click.pass_context
+@with_appcontext
+def fr_pnr(ctx, **kwargs):
+    ctx.invoke(
+        wfs,
+        url="https://data.geopf.fr/wfs/",
+        layer_id="patrinat_pnr:pnr",
+        srid=2154,
+        type_code="PNR",
+        mappings=["area_code=id_mnhn", "area_name=nom_cite"],
+        additional_data_fields="gest_site,operateur,territoire,area_sig,cd_sig,marin,src_geom,date_crea,p1_nature,p4_geologi",
+        **kwargs,
+    )
