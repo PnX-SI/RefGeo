@@ -89,6 +89,9 @@ jobs:
       - name: Show database status
         run: |
           flask db status
+      - name: Show ref geo info
+        run: |
+          flask ref_geo info
       - name: Test with pytest
         run: |
           pytest -v --cov --cov-report xml

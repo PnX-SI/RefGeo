@@ -3,7 +3,7 @@ import json
 
 from flask import url_for, current_app
 from flask_migrate import Migrate
-from ref_geo.commands import change_area_activation_status
+from ref_geo.commands import change_area_activation_status, compute_where_clause
 from werkzeug.exceptions import Unauthorized, BadRequest
 from jsonschema import validate as validate_json
 from alembic.migration import MigrationContext
@@ -32,7 +32,7 @@ CITY = "La Motte-en-Champsaur"
 PARAMETER_ENABLE = [
     (dict(area_code=["50120"]), "50120"),
     (dict(area_name=["Ain"]), "01"),
-    (dict(area_type=["COM"]), "01005"),
+    (dict(area_type_code=["COM"]), "01005"),
     (
         dict(
             in_polygon="POLYGON ((-1.653442 49.628504, -1.588898 49.628504, -1.588898 49.653849, -1.653442 49.653849, -1.653442 49.628504))"
@@ -456,7 +456,9 @@ class TestRefGeo:
         db.session.execute(
             update(LAreas).where(LAreas.area_code == expected_area_code).values(enable=False)
         )
-        change_area_activation_status(**parameters, enable=True)
+        change_area_activation_status(
+            compute_where_clause(**parameters, confirm=False), enable=True
+        )
         q = select(LAreas.enable).where(LAreas.area_code == expected_area_code)
         assert db.session.scalar(q) == True
 
@@ -468,6 +470,8 @@ class TestRefGeo:
         db.session.execute(
             update(LAreas).where(LAreas.area_code == expected_area_code).values(enable=True)
         )
-        change_area_activation_status(**parameters, enable=False)
+        change_area_activation_status(
+            compute_where_clause(**parameters, confirm=False), enable=False
+        )
         q = select(LAreas.enable).where(LAreas.area_code == expected_area_code)
         assert db.session.scalar(q) == False
