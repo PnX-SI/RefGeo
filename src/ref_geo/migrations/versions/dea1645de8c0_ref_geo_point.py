@@ -30,10 +30,8 @@ def upgrade():
 
 
 def downgrade():
-    op.get_bind().execute(
-        text("""
+    op.get_bind().execute(text("""
         DROP TABLE ref_geo.l_points;
         DROP TABLE ref_geo.bib_points_types;
-    """)
-    )
+    """))
     pass
