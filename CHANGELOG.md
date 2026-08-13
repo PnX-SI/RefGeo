@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 1.6.0 (unreleased)
+
+**🚀 Nouveautés**
+
+- Mise à jour Utils-Flask-SQLAlchemy en 0.5.0 et Utils-Flask-SQLAlchemy-Geo en 0.4.0. Ajout de la compatibilité avec SQLAlchemy 2.0.x (#42 par @jacquesfize)
+
+
 ## 1.5.7 (2026-02-18)
 
 **🚀 Nouveautés**
