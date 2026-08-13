@@ -20,6 +20,7 @@ class AreaSchema(SmartRelationshipsMixin, GeoAlchemyAutoSchema):
         include_fk = True
         load_instance = True
         feature_geometry = "geom_4326"
+        exclude = ("parent_areas",)
 
     area_type = Nested(AreaTypeSchema)
 

@@ -22,7 +22,7 @@ def info():
         .group_by(BibAreasTypes.id_type)
         .order_by(BibAreasTypes.id_type)
     )
-    for area_type, count in db.session.scalars(q).unique().all():
+    for area_type, count in db.session.execute(q).all():
         click.echo("\t{}: {}".format(area_type.type_name, count))
 
 

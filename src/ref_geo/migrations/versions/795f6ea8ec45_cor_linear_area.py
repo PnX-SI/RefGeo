@@ -25,9 +25,9 @@ def upgrade():
 
 
 def downgrade():
-    op.get_bind().execute("""
+    op.get_bind().execute(sa.text("""
         DROP TABLE ref_geo.cor_linear_area;
         DROP TABLE ref_geo.cor_areas;
-    """)
+    """))
 
     pass
