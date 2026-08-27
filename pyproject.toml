@@ -47,9 +47,10 @@ migrations = "ref_geo.migrations:versions"
 [project.entry-points."flask.commands"]
 ref_geo = "ref_geo.commands:ref_geo"
 
-[tool.setuptools]
-package-dir = { "" = "src" }
-packages = ["ref_geo"]
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["ref_geo*"]
+exclude = ["ref_geo.tests*"]
 
 [tool.setuptools.dynamic]
 version = { file = "VERSION" }
