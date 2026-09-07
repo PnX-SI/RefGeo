@@ -23,7 +23,7 @@ branch_labels = ("ref_geo_inpn_grids_5",)
 depends_on = "6afe74833ed0"  # ref_geo
 
 filename = "inpn_grids_5.csv.xz"
-base_url = "http://geonature.fr/data/inpn/layers/2020/"
+base_url = "https://geonature.fr/data/inpn/layers/2020/"
 temp_table_name = "temp_grids_5"
 area_type = "M5"
 
