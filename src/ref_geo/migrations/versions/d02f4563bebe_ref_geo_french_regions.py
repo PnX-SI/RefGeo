@@ -24,7 +24,7 @@ depends_on = "4882d6141a41"  # ref_geo
 
 
 filename = "regions_fr_2021-11.csv.xz"
-base_url = "http://geonature.fr/data/ign/"
+base_url = "https://geonature.fr/data/ign/"
 temp_table_name = "temp_fr_regions"
 
 

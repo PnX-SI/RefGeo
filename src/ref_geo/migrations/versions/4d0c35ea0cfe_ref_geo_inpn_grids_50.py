@@ -23,7 +23,7 @@ depends_on = "6afe74833ed0"
 
 grid = "50"
 filename = f"inpn_grids_{grid}.csv.xz"
-base_url = "http://geonature.fr/data/inpn/layers/2024/"
+base_url = "https://geonature.fr/data/inpn/layers/2024/"
 temp_table_name = f"temp_grids_{grid}"
 area_type = f"M{grid}"
 

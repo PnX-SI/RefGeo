@@ -18,7 +18,7 @@ branch_labels = ("ref_geo_fr_departments",)
 depends_on = "6afe74833ed0"  # ref_geo
 
 filename = "departements_fr_2020-02.csv.xz"
-base_url = "http://geonature.fr/data/ign/"
+base_url = "https://geonature.fr/data/ign/"
 temp_table_name = "temp_fr_departements"
 
 
