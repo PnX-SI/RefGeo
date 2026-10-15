@@ -9,7 +9,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -e .
 pip install psycopg2  # for postgresql database
-export SQLALCHEMY_DATABASE_URI="postgresql://user:password@localhost:5432database"
+export SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://user:password@localhost:5432database"
 cd src/ref_geo/migrations
 alembic -x local-srid=2154 upgrade ref_geo@head
 alembic upgrade ref_geo_fr_municipalities@head  # Insertion des communes françaises
