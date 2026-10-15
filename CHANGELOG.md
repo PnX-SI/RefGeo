@@ -1,11 +1,16 @@
 # CHANGELOG
 
-## 1.6.0 (unreleased)
+## 1.6.0 (2026-10-15)
 
 **🚀 Nouveautés**
 
 - Mise à jour Utils-Flask-SQLAlchemy en 0.5.0 et Utils-Flask-SQLAlchemy-Geo en 0.4.0. Ajout de la compatibilité avec SQLAlchemy 2.0.x (#42 par @jacquesfize)
+- Abandon du support de Python 3.9 et suppression du fichier `setup.py` au profit d'un `pyproject.toml` (par @jacquesfize)
+- Utilisation de `uv` dans l'intégration continue (par @jacquesfize)
 
+**🐛 Corrections**
+
+- Retrait d'index redondants (#41 par @PaulLabruyere)
 
 ## 1.5.7 (2026-02-18)
 
